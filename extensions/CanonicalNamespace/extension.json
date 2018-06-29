@@ -1,0 +1,19 @@
+{
+	"name": "CanonicalNamespace",
+	"version": "1.0.0",
+	"author": [
+		"Sergey Menshikov"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:CanonicalNamespace",
+	"license-name": "MIT",
+	"type": "other",
+	"AutoloadClasses": {
+		"CanonicalNamespace": "CanonicalNamespace.class.php"
+	},
+	"Hooks": {
+		"BeforeDisplayNoArticleText": "CanonicalNamespace::onBeforeDisplayNoArticleText",
+		"BeforePageDisplay": "CanonicalNamespace::onBeforePageDisplay"
+	},
+	"manifest_version": 1
+}
+

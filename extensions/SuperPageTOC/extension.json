@@ -1,0 +1,20 @@
+{
+	"name": "SuperPageTOC",
+	"version": "1.0.0",
+	"author": [
+		"Sergey Menshikov"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:BoilerPlate",
+	"license-name": "MIT",
+	"type": "other",
+	"AutoloadClasses": {
+		"SuperPageTOC": "SuperPageTOC.class.php"
+	},
+	"Hooks": {
+		"ParserAfterParse": "SuperPageTOC::onParserAfterParse",
+		"ParserBeforeStrip": "SuperPageTOC::onParserBeforeStrip",
+		"ParserSectionCreate": "SuperPageTOC::onParserSectionCreate"
+	},
+	"manifest_version": 1
+}
+
