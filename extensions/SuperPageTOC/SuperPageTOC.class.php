@@ -3,6 +3,7 @@
 class SuperPageTOC {
 
 	private static $mLevel;
+	private static $mBoolFlag;
 
 	public static function onParserBeforeStrip( &$parser, &$text, &$strip_state ) {
 		global $wgRequest;
@@ -48,6 +49,7 @@ class SuperPageTOC {
 	private static function generateSuperPageToc($superPageText, $pageToc, $pageTitleText){
 		$output = "";
 		$level = 1;
+		$sectionLevel = 1;
 		$superPageTocSeparator = "`-`-`-`-`-`-`SuperPageTOC-Separator`-`-`-`-`-`-`";
 		foreach(preg_split("/((\r?\n)|(\r\n?))/", $superPageText) as $line){
 			// find this title in super page toc
@@ -72,24 +74,24 @@ class SuperPageTOC {
 			$level = $newLevel;
 			self::$mLevel = $level;
 			// add links
+			self::$mBoolFlag = false;
 			$line = preg_replace_callback("/\[\[\s*([^|]+)\s*\|?\s*([^\]]*)\]\]/","self::replaceLinks",$line);
-			$output.='<li class="toclevel-'.$level.'">'.$line."</li>";
+			if(!self::$mBoolFlag) // not a link line
+				$line = '<span class="toctext">'.$line.'</span>';
+			$output.='<li class="toclevel-'.$level.' tocsection-'.$sectionLevel.'">'.$line."</li>";
+			$sectionLevel++;
 		} 
+		// assemble 2 tocs
 		$halves = explode($superPageTocSeparator,$output);
-		return $halves[0].$pageToc.$halves[1];
-		// process bullets, one on each line
 		
-		// create links
-		$linkp = '/\[\[(.+?)\]\]/';
-		$link1p = '/^[^|]+$/';
-		$link2p = '/^([^|]+)(|.*)$/';
-		// split
-		// marry tocs
+		$index1 = stripos($pageToc,'<ul>')+4;
+		$index2 = strripos($pageToc,'</ul>');
 
-		return $output;
+		return substr($pageToc,0,$index1).$halves[0].substr($pageToc,$index1,$index2-$index1).$halves[1].substr($pageToc,$index2);
 	}
 
 	private static function replaceLinks($matches){
+		self::$mBoolFlag = true;
 		$url = Title::newFromText($matches[1])->getFullURL();
 		return '<a href="'.$url.'"><span class="toctext">'.$matches[2].'</span></a>';
 	}
