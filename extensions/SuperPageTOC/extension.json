@@ -12,8 +12,7 @@
 	},
 	"Hooks": {
 		"ParserAfterParse": "SuperPageTOC::onParserAfterParse",
-		"ParserBeforeStrip": "SuperPageTOC::onParserBeforeStrip",
-		"ParserSectionCreate": "SuperPageTOC::onParserSectionCreate"
+		"ParserBeforeStrip": "SuperPageTOC::onParserBeforeStrip"
 	},
 	"manifest_version": 1
 }
