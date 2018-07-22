@@ -1,0 +1,10 @@
+/**
+!.gitignore
+!WikiBookLocalSettings.php
+!extensions/
+!extensions/CanonicalNamespace/
+!extensions/CanonicalNamespace/*
+!extensions/NamespaceLocalLinks/
+!extensions/NamespaceLocalLinks/*
+!extensions/SuperPageTOC/
+!extensions/SuperPageTOC/*
