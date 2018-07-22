@@ -1,0 +1,18 @@
+{
+	"name": "BookExport",
+	"version": "1.0.0",
+	"author": [
+		"Sergey Menshikov"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:BookExport",
+	"license-name": "MIT",
+	"type": "other",
+	"AutoloadClasses": {
+		"BookExport": "BookExport.class.php"
+	},
+	"Hooks": {
+		"UnknownAction": "BookExport::onUnknownAction"
+	},
+	"manifest_version": 1
+}
+
