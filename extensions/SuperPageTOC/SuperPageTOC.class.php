@@ -52,6 +52,11 @@ class SuperPageTOC {
 		$sectionLevel = 1;
 		$superPageTocSeparator = "`-`-`-`-`-`-`SuperPageTOC-Separator`-`-`-`-`-`-`";
 		foreach(preg_split("/((\r?\n)|(\r\n?))/", $superPageText) as $line){
+			// heading
+			if(preg_match("/=(.+?)=/", $line, $matches)){
+				$output.='<span class="book-title">'.$matches[1].'</span>';
+				continue;
+			}
 			// find this title in super page toc
 			if(preg_match("/\[\[\s*".preg_quote($pageTitleText,'/')."\s*\|?\s*[^\]]*\s*\]\]/i",$line)==1){
 				$output.=$superPageTocSeparator;
