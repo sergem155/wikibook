@@ -4,6 +4,7 @@ class SuperPageTOC {
 
 	private static $mLevel;
 	private static $mBoolFlag;
+	private static $mNamespace;
 
 	public static function onParserBeforeStrip( &$parser, &$text, &$strip_state ) {
 		global $wgRequest;
@@ -36,11 +37,12 @@ class SuperPageTOC {
 			if($separator_pos < 1) // calling not from a subpage
 				return;
 			$parent = Title::newFromText(substr($doc, 0, $separator_pos));
+			self::$mNamespace = $parent->getSubjectNsText();
 			$article = new Article($parent);
 			$superTocText = ContentHandler::getContentText( $article->getPage()->getContent() );
 			// process links and indentation here
 			// memorize TOC
-			$newToc = self::generateSuperPageToc($superTocText, $tocText, $doc);
+			$newToc = self::generateSuperPageToc($superTocText, $tocText, $title->getText());
 			$text = str_replace($tocText,$newToc, $text);
 		}
 		return true;
@@ -97,7 +99,7 @@ class SuperPageTOC {
 
 	private static function replaceLinks($matches){
 		self::$mBoolFlag = true;
-		$url = Title::newFromText($matches[1])->getFullURL();
+		$url = Title::newFromText(self::$mNamespace.':'.$matches[1])->getFullURL();
 		return '<a href="'.$url.'"><span class="toctext">'.$matches[2].'</span></a>';
 	}
 }
