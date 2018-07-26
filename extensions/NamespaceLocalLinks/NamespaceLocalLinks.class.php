@@ -9,7 +9,7 @@ class NamespaceLocalLinks {
 			return true;
 		}
 		if( preg_match_all( // all links without a colon in URL part
-						"/\[\[([A-Za-z0-9,.\/_ -]+)(\#[A-Za-z0-9 ._-]*)?([|]([A-Za-z0-9,:.'_?!@\/\"()#$ -{}]*))?\]\]/",
+						"/\[\[([A-Za-z0-9,.\/_ \(\)-]+)(\#[A-Za-z0-9 ._-]*)?([|]([A-Za-z0-9,:.'_?!@\/\"()#$ -{}]*))?\]\]/",
 						$text,
 						$matches,
 						PREG_SET_ORDER ) ) {

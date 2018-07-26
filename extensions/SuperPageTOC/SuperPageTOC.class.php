@@ -54,7 +54,7 @@ class SuperPageTOC {
 		foreach(preg_split("/((\r?\n)|(\r\n?))/", $superPageText) as $line){
 			// heading
 			if(preg_match("/=(.+?)=/", $line, $matches)){
-				$output.='<span class="book-title">'.$matches[1].'</span>';
+				$output.='<div class="book-title">'.$matches[1].'</div>';
 				continue;
 			}
 			// find this title in super page toc
