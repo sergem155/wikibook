@@ -5,6 +5,7 @@ class SuperPageTOC {
 	private static $mLevel;
 	private static $mBoolFlag;
 	private static $mNamespace;
+	private static $mCurrentLink;
 
 	public static function onParserBeforeStrip( &$parser, &$text, &$strip_state ) {
 		global $wgRequest;
@@ -20,6 +21,7 @@ class SuperPageTOC {
 			$hasRun = true;
 			// ensure TOC is always shown 
 			$text = "__FORCETOC__\r\n".$text;
+			$text = "<languages/>\n".$text."/prevnext/"; # show language bar for pages subject to translation
 			return true;
 		}
 		return true;
@@ -42,13 +44,27 @@ class SuperPageTOC {
 			$superTocText = ContentHandler::getContentText( $article->getPage()->getContent() );
 			// process links and indentation here
 			// memorize TOC
-			$newToc = self::generateSuperPageToc($superTocText, $tocText, $title->getText());
+			$prev = false;
+			$next = false;
+			$newToc = self::generateSuperPageToc($superTocText, $tocText, $title->getText(), $prev, $next);
 			$text = str_replace($tocText,$newToc, $text);
+			// generate Previous | Next links at the bottom of the page
+			$prevnext = "";
+			if ($prev){
+				$prevnext .= '<a href="'.$prev.'">&lt; Previous</a>';
+			}
+			if($prev and $next)
+				$prevnext .= ' | ';
+			if ($next){
+				$prevnext .= '<a href="'.$next.'">Next &gt;</a>';
+			}
+			$prevnext = "<center>".$prevnext."</center>";
+			$text = str_replace("/prevnext/",$prevnext, $text);
 		}
 		return true;
 	}
 
-	private static function generateSuperPageToc($superPageText, $pageToc, $pageTitleText){
+	private static function generateSuperPageToc($superPageText, $pageToc, $pageTitleText, &$prev, &$next){
 		$output = "";
 		$level = 1;
 		$sectionLevel = 1;
@@ -62,6 +78,9 @@ class SuperPageTOC {
 			// find this title in super page toc
 			if(preg_match("/\[\[\s*".preg_quote($pageTitleText,'/')."\s*\|?\s*[^\]]*\s*\]\]/i",$line)==1){
 				$output.=$superPageTocSeparator;
+				if(self::$mCurrentLink){
+					$prev = self::$mCurrentLink;
+				}
 				continue;
 			}
 			// add <ul> or </ul>
@@ -82,9 +101,14 @@ class SuperPageTOC {
 			self::$mLevel = $level;
 			// add links
 			self::$mBoolFlag = false;
+			self::$mCurrentLink = false;
 			$line = preg_replace_callback("/\[\[\s*([^|]+)\s*\|?\s*([^\]]*)\]\]/","self::replaceLinks",$line);
 			if(!self::$mBoolFlag) // not a link line
 				$line = '<span class="toctext">'.$line.'</span>';
+			else
+				if($prev and !$next){
+					$next = self::$mCurrentLink;
+				}
 			$output.='<li class="toclevel-'.$level.' tocsection-'.$sectionLevel.'">'.$line."</li>";
 			$sectionLevel++;
 		} 
@@ -100,6 +124,7 @@ class SuperPageTOC {
 	private static function replaceLinks($matches){
 		self::$mBoolFlag = true;
 		$url = Title::newFromText(self::$mNamespace.':'.$matches[1])->getFullURL();
+		self::$mCurrentLink = $url;
 		return '<a href="'.$url.'"><span class="toctext">'.$matches[2].'</span></a>';
 	}
 }
