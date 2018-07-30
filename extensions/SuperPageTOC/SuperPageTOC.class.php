@@ -70,6 +70,7 @@ class SuperPageTOC {
 		$level = 1;
 		$sectionLevel = 1;
 		self::$mBoolTopicFound = false;
+		self::$mCurrentLink = false;
 		$superPageTocSeparator = "`-`-`-`-`-`-`SuperPageTOC-Separator`-`-`-`-`-`-`";
 		foreach(preg_split("/((\r?\n)|(\r\n?))/", $superPageText) as $line){
 			// heading
@@ -104,7 +105,6 @@ class SuperPageTOC {
 			self::$mLevel = $level;
 			// add links
 			self::$mBoolFlag = false;
-			self::$mCurrentLink = false;
 			$line = preg_replace_callback("/\[\[\s*([^|]+)\s*\|?\s*([^\]]*)\]\]/","self::replaceLinks",$line);
 			if(!self::$mBoolFlag) // not a link line
 				$line = '<span class="toctext">'.$line.'</span>';
