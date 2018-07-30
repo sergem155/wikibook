@@ -6,6 +6,7 @@ class SuperPageTOC {
 	private static $mBoolFlag;
 	private static $mNamespace;
 	private static $mCurrentLink;
+	private static $mBoolTopicFound;
 
 	public static function onParserBeforeStrip( &$parser, &$text, &$strip_state ) {
 		global $wgRequest;
@@ -68,6 +69,7 @@ class SuperPageTOC {
 		$output = "";
 		$level = 1;
 		$sectionLevel = 1;
+		self::$mBoolTopicFound = false;
 		$superPageTocSeparator = "`-`-`-`-`-`-`SuperPageTOC-Separator`-`-`-`-`-`-`";
 		foreach(preg_split("/((\r?\n)|(\r\n?))/", $superPageText) as $line){
 			// heading
@@ -81,6 +83,7 @@ class SuperPageTOC {
 				if(self::$mCurrentLink){
 					$prev = self::$mCurrentLink;
 				}
+				self::$mBoolTopicFound = true;
 				continue;
 			}
 			// add <ul> or </ul>
@@ -106,7 +109,7 @@ class SuperPageTOC {
 			if(!self::$mBoolFlag) // not a link line
 				$line = '<span class="toctext">'.$line.'</span>';
 			else
-				if($prev and !$next){
+				if(self::$mBoolTopicFound and !$next){
 					$next = self::$mCurrentLink;
 				}
 			$output.='<li class="toclevel-'.$level.' tocsection-'.$sectionLevel.'">'.$line."</li>";
