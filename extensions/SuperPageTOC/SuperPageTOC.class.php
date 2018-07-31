@@ -23,7 +23,7 @@ class SuperPageTOC {
 			// ensure TOC is always shown 
 			$text = "__FORCETOC__\r\n".$text;
 			$text = "<languages/>\n".$text; # show language bar for pages subject to translation
-			// add /prevnext/ ?
+			// add /prevnext/ ? only from subpages
 			$doc = $title->getFullText();
 			$separator_pos = strpos($doc,'/');
 			if($separator_pos > 1){ // calling from a subpage
