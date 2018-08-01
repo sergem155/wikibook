@@ -37,7 +37,7 @@ class SuperPageTOC {
 	public static function onParserAfterParse( &$parser, &$text, &$stripState ) {
 		$tocText = $parser->mOutput->getTOCHTML();
 		// substitute with a new TOC
-		if(strlen($tocText) > 0){
+		if(strlen($tocText) > 0 and !$parser->getOptions()->getIsPrintable()){
 			$title = $parser->getTitle();
 			if(empty($title))
 				return true;

@@ -2,12 +2,13 @@
 
 class NamespaceLocalLinks {
 	public static function onParserBeforeStrip( &$parser, &$text, &$strip_state ) {
-		global $wgExtraNamespaces;
+		global $wgExtraNamespaces, $wgContLang;
 		$title = $parser->getTitle();
 		// only do this for pages, and only for those in custom namespaces
 		if(empty($title) || !array_key_exists($title->getNamespace(),$wgExtraNamespaces)) {
 			return true;
 		}
+		//error_log($wgLang->getCode());
 		if( preg_match_all( // all links without a colon in URL part
 						"/\[\[([A-Za-z0-9,.\/_ \(\)-]+)(\#[A-Za-z0-9 ._-]*)?([|](.*?))?\]\]/",
 						$text,
