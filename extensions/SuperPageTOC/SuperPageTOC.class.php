@@ -105,7 +105,7 @@ class SuperPageTOC {
 				continue;
 			}
 			// find this title in super page toc
-			if(preg_match("/\[\[\s*".preg_quote($pageTitleText,'/')."\s*\|?\s*[^\]]*\s*\]\]/i",$line)==1){
+			if(preg_match("/\[\[\s*".preg_quote($pageTitleText,'/')."\s*(?:\|\s*[^\]]*)?\]\]/i",$line)==1){
 				$output.=$superPageTocSeparator;
 				if(self::$mCurrentLink){
 					$prev = self::$mCurrentLink;
@@ -131,7 +131,7 @@ class SuperPageTOC {
 			self::$mLevel = $level;
 			// add links
 			self::$mBoolFlag = false;
-			$line = preg_replace_callback("/\[\[\s*([^|]+)\s*\|?\s*([^\]]*)\]\]/","self::replaceLinks",$line);
+			$line = preg_replace_callback("/\[\[\s*([^|]+)\s*(?:\|\s*([^\]]*))?\]\]/","self::replaceLinks",$line);
 			if(!self::$mBoolFlag) // not a link line
 				$line = '<span class="toctext">'.$line.'</span>';
 			else
@@ -159,7 +159,7 @@ class SuperPageTOC {
 			if($linkLangTitle->exists())
 				$linkDoc .= "/".self::$mPageLangCode;
 		}
-		error_log($linkDoc);
+		// get URL and insert it
 		$url = Title::newFromText($linkDoc)->getFullURL();
 		self::$mCurrentLink = $url;
 		return '<a href="'.$url.'"><span class="toctext">'.$matches[2].'</span></a>';

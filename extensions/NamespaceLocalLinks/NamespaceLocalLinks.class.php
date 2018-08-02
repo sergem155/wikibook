@@ -14,14 +14,15 @@ class NamespaceLocalLinks {
 		if($pageLang != $langSuffix){
 			$langSuffix = "/".$pageLang;
 		}
-		if( preg_match_all( // all links without a colon in URL part
+		// for all links without a colon in URL part, do replacement
+		if( preg_match_all(
 						"/\[\[([A-Za-z0-9,.\/_ \(\)-]+)(\#[A-Za-z0-9 ._-]*)?([|](.*?))?\]\]/",
 						$text,
 						$matches,
 						PREG_SET_ORDER ) ) {
 			foreach ( $matches as $match ) {
 				// see if language variant exists
-				$linkDoc = $title->getSubjectNsText().":".$match[1];
+				$linkDoc = trim($title->getSubjectNsText().":".$match[1]);
 				if($langSuffix){
 					$linkLangTitle = Title::newFromText($linkDoc.$langSuffix);	
 					if($linkLangTitle->exists())
