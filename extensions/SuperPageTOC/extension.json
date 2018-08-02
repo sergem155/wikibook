@@ -7,6 +7,11 @@
 	"url": "https://www.mediawiki.org/wiki/Extension:BoilerPlate",
 	"license-name": "MIT",
 	"type": "other",
+	"MessagesDirs": {
+		"SuperPageTOC": [
+			"i18n"
+		]
+	},
 	"AutoloadClasses": {
 		"SuperPageTOC": "SuperPageTOC.class.php"
 	},

@@ -7,6 +7,8 @@ class SuperPageTOC {
 	private static $mNamespace;
 	private static $mCurrentLink;
 	private static $mBoolTopicFound;
+	private static $mContLangCode;
+	private static $mPageLangCode;
 
 	public static function onParserBeforeStrip( &$parser, &$text, &$strip_state ) {
 		global $wgRequest;
@@ -35,17 +37,30 @@ class SuperPageTOC {
 	}
 
 	public static function onParserAfterParse( &$parser, &$text, &$stripState ) {
+		global $wgContLang;
 		$tocText = $parser->mOutput->getTOCHTML();
 		// substitute with a new TOC
 		if(strlen($tocText) > 0 and !$parser->getOptions()->getIsPrintable()){
 			$title = $parser->getTitle();
 			if(empty($title))
 				return true;
+			// memorize lang codes
+			self::$mPageLangCode = $title->getPageLanguage()->getCode();
+			self::$mContLangCode = $wgContLang->getCode();
+			// find a superpage, if exists
 			$doc = $title->getFullText();
 			$separator_pos = strpos($doc,'/');
 			if($separator_pos < 1) // calling not from a subpage
 				return;
-			$parent = Title::newFromText(substr($doc, 0, $separator_pos));
+			$superPageDoc = substr($doc, 0, $separator_pos);
+			// see if there is a language-specific version of the superpage
+			if(self::$mPageLangCode != self::$mContLangCode){
+				$linkLangTitle = Title::newFromText($superPageDoc."/".self::$mPageLangCode);	
+				if($linkLangTitle->exists())
+					$superPageDoc .= "/".self::$mPageLangCode;
+			}
+			// get toc text from the super page
+			$parent = Title::newFromText($superPageDoc);
 			self::$mNamespace = $parent->getSubjectNsText();
 			$article = new Article($parent);
 			$superTocText = ContentHandler::getContentText( $article->getPage()->getContent() );
@@ -58,12 +73,12 @@ class SuperPageTOC {
 			// generate Previous | Next links at the bottom of the page
 			$prevnext = "";
 			if ($prev){
-				$prevnext .= '<a href="'.$prev.'">&lt; Previous</a>';
+				$prevnext .= '<a href="'.$prev.'">&lt; '.(wfMessage( 'wikibook-prev' )->text()).'</a>';
 			}
 			if($prev and $next)
 				$prevnext .= ' | ';
 			if ($next){
-				$prevnext .= '<a href="'.$next.'">Next &gt;</a>';
+				$prevnext .= '<a href="'.$next.'">'.(wfMessage( 'wikibook-next' )->text()).' &gt;</a>';
 			}
 			$prevnext = "<center>".$prevnext."</center>";
 			$text = str_replace("/prevnext/",$prevnext, $text);
@@ -77,9 +92,14 @@ class SuperPageTOC {
 		$sectionLevel = 1;
 		self::$mBoolTopicFound = false;
 		self::$mCurrentLink = false;
+		// remove lang suffix from pagetitle, so it would match toc
+		if(self::$mPageLangCode != self::$mContLangCode){
+			$pageTitleText = substr($pageTitleText, 0, strlen($pageTitleText)-1-strlen(self::$mPageLangCode));
+		}
+		// for each line in toc:
 		$superPageTocSeparator = "`-`-`-`-`-`-`SuperPageTOC-Separator`-`-`-`-`-`-`";
 		foreach(preg_split("/((\r?\n)|(\r\n?))/", $superPageText) as $line){
-			// heading
+			// get heading
 			if(preg_match("/=(.+?)=/", $line, $matches)){
 				$output.='<div class="book-title">'.$matches[1].'</div>';
 				continue;
@@ -132,7 +152,17 @@ class SuperPageTOC {
 
 	private static function replaceLinks($matches){
 		self::$mBoolFlag = true;
-		$url = Title::newFromText(self::$mNamespace.':'.$matches[1])->getFullURL();
+		$linkDoc = trim(self::$mNamespace.':'.$matches[1]);
+		error_log("++++++++++++++++++++++");
+		error_log($linkDoc);
+		// see if there is a language-specific version of the link doc
+		if(self::$mPageLangCode != self::$mContLangCode){
+			$linkLangTitle = Title::newFromText($linkDoc."/".self::$mPageLangCode);	
+			if($linkLangTitle->exists())
+				$linkDoc .= "/".self::$mPageLangCode;
+		}
+		error_log($linkDoc);
+		$url = Title::newFromText($linkDoc)->getFullURL();
 		self::$mCurrentLink = $url;
 		return '<a href="'.$url.'"><span class="toctext">'.$matches[2].'</span></a>';
 	}

@@ -74,7 +74,7 @@ class BookExport {
 			$doc_content = ContentHandler::getContentText( $doc_article->getPage()->getContent() );
 			$doc_content = preg_replace_callback("/\[\[([A-Za-z0-9,.\/_ \(\)-]+)([|](.*?))?\]\]/",
 'self::sanitizeLinks',$doc_content);
-			$result .= '<span id="topic_'.self::sanitizeFragment(trim($title->getText())).'"></span>'."\r\n"."<!--ARTICLE:".$doc."-->\r\n".$doc_content."\r\n\r\n";
+			$result .= '<span id="topic_'.self::sanitizeFragment(trim($doc_title->getText())).'"></span>'."\r\n"."<!--ARTICLE:".$doc."-->\r\n".$doc_content."\r\n\r\n";
 		}
 		return $result;
 	}
@@ -83,6 +83,7 @@ class BookExport {
 		global $wgOut, $wgUser, $wgTitle, $wgParser, $wgRequest;
 		global $wgServer, $wgArticlePath, $wgScriptPath, $wgUploadPath, $wgUploadDirectory, $wgScript, $wgStylePath;
 		$title = $article->getTitle();
+
 		// find parent, set base url
 		$title_text = $title->getFullText();
 		$separator_pos = strpos($title_text,'/');

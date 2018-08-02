@@ -8,17 +8,27 @@ class NamespaceLocalLinks {
 		if(empty($title) || !array_key_exists($title->getNamespace(),$wgExtraNamespaces)) {
 			return true;
 		}
-		//error_log($wgLang->getCode());
+		// check if page is translated, come up with lang suffix
+		$langSuffix = false;
+		$pageLang = $title->getPageLanguage()->getCode();
+		if($pageLang != $langSuffix){
+			$langSuffix = "/".$pageLang;
+		}
 		if( preg_match_all( // all links without a colon in URL part
 						"/\[\[([A-Za-z0-9,.\/_ \(\)-]+)(\#[A-Za-z0-9 ._-]*)?([|](.*?))?\]\]/",
 						$text,
 						$matches,
 						PREG_SET_ORDER ) ) {
 			foreach ( $matches as $match ) {
-				$text =	str_replace(
-									$match[0],
-									"[[".$title->getSubjectNsText().":".$match[1].$match[2].$match[3]."]]",
-									$text );
+				// see if language variant exists
+				$linkDoc = $title->getSubjectNsText().":".$match[1];
+				if($langSuffix){
+					$linkLangTitle = Title::newFromText($linkDoc.$langSuffix);	
+					if($linkLangTitle->exists())
+						$linkDoc .= $langSuffix;
+				}
+				// replace link
+				$text =	str_replace($match[0], "[[".$linkDoc.$match[2].$match[3]."]]", $text );
 			}		
 			return true;	
 		}
