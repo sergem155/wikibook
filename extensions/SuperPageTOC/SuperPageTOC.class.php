@@ -153,8 +153,6 @@ class SuperPageTOC {
 	private static function replaceLinks($matches){
 		self::$mBoolFlag = true;
 		$linkDoc = trim(self::$mNamespace.':'.$matches[1]);
-		error_log("++++++++++++++++++++++");
-		error_log($linkDoc);
 		// see if there is a language-specific version of the link doc
 		if(self::$mPageLangCode != self::$mContLangCode){
 			$linkLangTitle = Title::newFromText($linkDoc."/".self::$mPageLangCode);	
