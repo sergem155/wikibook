@@ -8,5 +8,7 @@
 !extensions/NamespaceLocalLinks/*
 !extensions/SuperPageTOC/
 !extensions/SuperPageTOC/*
+!extensions/SuperPageTOC/i18n/
+!extensions/SuperPageTOC/i18n/*
 !extensions/BookExport/
 !extensions/BookExport/*
