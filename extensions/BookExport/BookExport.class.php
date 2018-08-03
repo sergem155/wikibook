@@ -99,24 +99,14 @@ class BookExport {
 		global $wgServer, $wgArticlePath, $wgScriptPath, $wgUploadPath, $wgUploadDirectory, $wgScript, $wgStylePath;
 		$title = $article->getTitle();
 
-		// find parent, set base url
-		$title_text = $title->getFullText();
-		$separator_pos = strpos($title_text,'/');
-		if($separator_pos > 1) // calling from a subpage
-			$book_title = Title::newFromText(substr($title_text, 0, $separator_pos));
-		else
-			$book_title = $title;
-		$base = $book_title->getFullUrl();
-		$base .= "?action=html-localimages-export";
-		// <base href="$base" target="_blank">
-
 		$opt = ParserOptions::newFromUser($wgUser);
 		$opt->setIsPrintable(true);
 		$opt->setEditSection(false);
 		$wikimarkup = self::exportWikimarkup($article, $docTitleText, $lastTimestamp);
 		$out = $wgParser->parse($wikimarkup, $title, $opt, true, true);
 		$text = $out->getText();
-		return self::htmlPage(self::coverPageHtml($docTitleText).$text);
+		$base = '<base href="'.($title->getFullUrl()).'?action=html-localimages-export">';
+		return self::htmlPage(self::coverPageHtml($docTitleText).$text, $base);
 	}
 
 
@@ -138,7 +128,7 @@ class BookExport {
 		return $titleText;
 	}
 
-	private function htmlPage($text){
+	private function htmlPage($text, $additionalHeaderHtml=""){
 
 		$html = <<<EOT
 <!doctype html>
@@ -152,6 +142,7 @@ img, blockquote  {page-break-inside:avoid;}
 tr {page-break-inside:avoid;}
 p {page-break-inside: avoid;}
 </style>
+$additionalHeaderHtml
 </head>
 <body>
 EOT;
@@ -185,6 +176,7 @@ EOT;
 		global $wgParser, $wgUser, $wgUploadDirectory;
 		$title = $article->getTitle();
 		$docVersionText = $title->getSubjectNsText();
+		$base = '<base href="'.($title->getFullUrl()).'?action=html-localimages-export">';
 
 		$wikimarkup = self::exportWikimarkup($article, $docTitleText, $lastTimestamp);
 
@@ -193,8 +185,8 @@ EOT;
 		$opt->setEditSection(false);
 		$out = $wgParser->parse($wikimarkup."\n__NOTOC__\n", $title, $opt, true, true);
 
-		$body = self::htmlPage($out->getText());
-		$cover = self::htmlPage(self::coverPageHTML($docVersionText.' '.$docTitleText));
+		$body = self::htmlPage($out->getText(),$base);
+		$cover = self::htmlPage(self::coverPageHTML($docVersionText.' '.$docTitleText),$base);
 
 		$coverFileName = self::writeFile($cover);
 		$bodyFileName = self::writeFile($body);
