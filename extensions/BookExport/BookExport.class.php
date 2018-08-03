@@ -160,17 +160,20 @@ EOT;
 		return $html;
 	}
 
-	private function writeFile($data){
-		$file = fopen(tempnam(sys_get_temp_dir(), 'wikibook'), 'w+');
+	private function writeFile($data, $suffix = '.html'){
+		$tempName = tempnam(sys_get_temp_dir(), 'wikibook');
+		unlink($tempName);
+		$file = fopen($tempName.$suffix, 'w+');
         $fileName = stream_get_meta_data($file)['uri'];
 		fwrite($file, $data);
 		fclose($file);
+		return $fileName;
 	}
 
-	static public function servePdf($fileName, $filePath) {
+	static public function serveFileAs($fileName, $filePath) {
 		if (file_exists($filePath)) {
 			header("Content-Type: application/pdf");
-			header("Content-Disposition: attachment; filename=\"$fileName.pdf\"");
+			header("Content-Disposition: attachment; filename=\"$fileName\"");
 			readfile($filePath);
 			die();
 		} else {
@@ -181,6 +184,7 @@ EOT;
 	private function exportPdf($article){
 		global $wgParser, $wgUser, $wgUploadDirectory;
 		$title = $article->getTitle();
+		$docVersionText = $title->getSubjectNsText();
 
 		$wikimarkup = self::exportWikimarkup($article, $docTitleText, $lastTimestamp);
 
@@ -194,29 +198,30 @@ EOT;
 
 		$coverFileName = self::writeFile($cover);
 		$bodyFileName = self::writeFile($body);
+		// make converter happy
+		rename($coverFileName, $coverFileName.".html");
+		$coverFileName .= ".html";
+		rename($bodyFileName, $bodyFileName.".html");
+		$bodyFileName .= ".html";
 
-		$docVersionText = $title->getNsText();
-
-		$pdfFileName = "wikibook-" . $docVersionText . "-" . ($title->getText()) .".pdf";
+		$pdfFileName = "wikibook-" . $docVersionText . "-" . ($title->getRootText()) .".pdf";
 		$pdfFilePath = "$wgUploadDirectory/".$pdfFileName;
 
 		//$wgOut->disable();
-		$cmd = "wkhtmltopdf -s Letter --outline --margin-bottom 0.5in --margin-top 0.5in --margin-left 0.5in --margin-right 0.5in "
+		$cmd = "/opt/wkhtmltox/bin/wkhtmltopdf -s Letter --outline --margin-bottom 0.5in --margin-top 0.5in --margin-left 0.5in --margin-right 0.5in --load-error-handling ignore --load-media-error-handling ignore "
 			." cover $coverFileName toc $bodyFileName $pdfFilePath";
 		$output = array();
 		$returnVar = 1;
 		exec($cmd, $output, $returnVar);
+		unlink($coverFileName);
+		unlink($bodyFileName);
+
 		if($returnVar != 0) { // 0 is success
 			error_log("INFO [PonyDocsPdfBook::onUnknownAction] " . php_uname('n') . ": Failed to run wkhtmltopdf (" . $returnVar . ") Output is as follows: " . implode("-", $output));
 			print("Failed to create PDF.  Our team is looking into it.");
-			die();
 		}
-		//unlink($coverFileName);
-		//unlink($bodyFileName);
 
-		self::servePdf($pdfFileName , $pdfFileName);
-
-		echo "<h1>aaa:".$lastTimestamp.'--'.$docVersionText.'--'.$docTitleText."</h1>";
+		self::serveFileAs($pdfFileName , $pdfFilePath);
 	}
 }
 ?>
