@@ -10,11 +10,15 @@ class BookExport {
 			return true;
 		}
 		if ($action == 'wikimarkup-export'){
-			echo self::exportWikimarkup($article, $docTitleText);
+			echo self::exportWikimarkup($article, $docTitleText, $lastTimestamp);
 			die();
 		}
 		if ($action == 'html-localimages-export'){
-			echo self::exportHTML($article);
+			echo self::exportHtml($article);
+			die();
+		}
+		if ($action == 'pdf-export'){
+			self::exportPdf($article);
 			die();
 		}
 	}
@@ -27,10 +31,11 @@ class BookExport {
 		return("[[#topic_".self::sanitizeFragment(trim($match[1])).$match[2]."]]");
 	}
 
-	private function exportWikimarkup(Article $article, &$docTitleText){
+	private function exportWikimarkup(Article $article, &$docTitleText, &$lastTimestamp){
 		$title = $article->getTitle();
 		$doc = $title->getFullText();
 		$separator_pos = strpos($doc,'/');
+		$lastTimestamp = 0;
 		if($separator_pos < 1) { // calling not from a subpage, return the article's wikitext
 			$content = ContentHandler::getContentText( $article->getPage()->getContent() );
 			$content = '<span id="topic_'.self::sanitizeFragment(trim($title->getText())).'"></span>'."\r\n".$content;
@@ -39,6 +44,11 @@ class BookExport {
 		}
 		# find all doc names in super page toc (all links)
 		$parent = Title::newFromText(substr($doc, 0, $separator_pos));
+		// save last edit time
+		$tmpTimestamp = wfTimestamp( TS_UNIX, $parent->getTouched());
+		if($tmpTimestamp and $tmpTimestamp > $lastTimestamp)
+			$lastTimestamp = $tmpTimestamp;
+		//
 		$article = new Article($parent);
 		$superPageText = ContentHandler::getContentText( $article->getPage()->getContent() );
 		// find title
@@ -70,6 +80,11 @@ class BookExport {
 		foreach($docs as $doc){
 			# ensure same namespace
 			$doc_title = Title::newFromText($doc);
+			// save last edit time
+			$tmpTimestamp = wfTimestamp( TS_UNIX, $doc_title->getTouched());
+			if($tmpTimestamp and $tmpTimestamp > $lastTimestamp)
+				$lastTimestamp = $tmpTimestamp;
+			//
 			$doc_article = new Article($doc_title);
 			$doc_content = ContentHandler::getContentText( $doc_article->getPage()->getContent() );
 			$doc_content = preg_replace_callback("/\[\[([A-Za-z0-9,.\/_ \(\)-]+)([|](.*?))?\]\]/",
@@ -79,7 +94,7 @@ class BookExport {
 		return $result;
 	}
 
-	private function exportHTML(Article $article){
+	private function exportHtml(Article $article){
 		global $wgOut, $wgUser, $wgTitle, $wgParser, $wgRequest;
 		global $wgServer, $wgArticlePath, $wgScriptPath, $wgUploadPath, $wgUploadDirectory, $wgScript, $wgStylePath;
 		$title = $article->getTitle();
@@ -98,7 +113,7 @@ class BookExport {
 		$opt = ParserOptions::newFromUser($wgUser);
 		$opt->setIsPrintable(true);
 		$opt->setEditSection(false);
-		$wikimarkup = self::exportWikimarkup($article,$docTitleText);
+		$wikimarkup = self::exportWikimarkup($article, $docTitleText, $lastTimestamp);
 		$out = $wgParser->parse($wikimarkup, $title, $opt, true, true);
 		$text = $out->getText();
 		return self::htmlPage(self::coverPageHtml($docTitleText).$text);
@@ -145,6 +160,63 @@ EOT;
 		return $html;
 	}
 
+	private function writeFile($data){
+		$file = fopen(tempnam(sys_get_temp_dir(), 'wikibook'), 'w+');
+        $fileName = stream_get_meta_data($file)['uri'];
+		fwrite($file, $data);
+		fclose($file);
+	}
 
+	static public function servePdf($fileName, $filePath) {
+		if (file_exists($filePath)) {
+			header("Content-Type: application/pdf");
+			header("Content-Disposition: attachment; filename=\"$fileName.pdf\"");
+			readfile($filePath);
+			die();
+		} else {
+			return false;
+		}
+	}
+
+	private function exportPdf($article){
+		global $wgParser, $wgUser, $wgUploadDirectory;
+		$title = $article->getTitle();
+
+		$wikimarkup = self::exportWikimarkup($article, $docTitleText, $lastTimestamp);
+
+		$opt = ParserOptions::newFromUser($wgUser);
+		$opt->setIsPrintable(true);
+		$opt->setEditSection(false);
+		$out = $wgParser->parse($wikimarkup."\n__NOTOC__\n", $title, $opt, true, true);
+
+		$body = self::htmlPage($out->getText());
+		$cover = self::htmlPage(self::coverPageHTML($docVersionText.' '.$docTitleText));
+
+		$coverFileName = self::writeFile($cover);
+		$bodyFileName = self::writeFile($body);
+
+		$docVersionText = $title->getNsText();
+
+		$pdfFileName = "wikibook-" . $docVersionText . "-" . ($title->getText()) .".pdf";
+		$pdfFilePath = "$wgUploadDirectory/".$pdfFileName;
+
+		//$wgOut->disable();
+		$cmd = "wkhtmltopdf -s Letter --outline --margin-bottom 0.5in --margin-top 0.5in --margin-left 0.5in --margin-right 0.5in "
+			." cover $coverFileName toc $bodyFileName $pdfFilePath";
+		$output = array();
+		$returnVar = 1;
+		exec($cmd, $output, $returnVar);
+		if($returnVar != 0) { // 0 is success
+			error_log("INFO [PonyDocsPdfBook::onUnknownAction] " . php_uname('n') . ": Failed to run wkhtmltopdf (" . $returnVar . ") Output is as follows: " . implode("-", $output));
+			print("Failed to create PDF.  Our team is looking into it.");
+			die();
+		}
+		//unlink($coverFileName);
+		//unlink($bodyFileName);
+
+		self::servePdf($pdfFileName , $pdfFileName);
+
+		echo "<h1>aaa:".$lastTimestamp.'--'.$docVersionText.'--'.$docTitleText."</h1>";
+	}
 }
 ?>
