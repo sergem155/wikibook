@@ -73,12 +73,12 @@ class SuperPageTOC {
 			// generate Previous | Next links at the bottom of the page
 			$prevnext = "";
 			if ($prev){
-				$prevnext .= '<a href="'.$prev.'">&lt; '.(wfMessage( 'wikibook-prev' )->text()).'</a>';
+				$prevnext .= '<a href="'.$prev.'">&lt; '.(wfMessage( 'wikibook-prev' )->inLanguage(self::$mPageLangCode)->text()).'</a>';
 			}
 			if($prev and $next)
 				$prevnext .= ' | ';
 			if ($next){
-				$prevnext .= '<a href="'.$next.'">'.(wfMessage( 'wikibook-next' )->text()).' &gt;</a>';
+				$prevnext .= '<a href="'.$next.'">'.(wfMessage( 'wikibook-next' )->inLanguage(self::$mPageLangCode)->text()).' &gt;</a>';
 			}
 			$prevnext = "<center>".$prevnext."</center>";
 			$text = str_replace("/prevnext/",$prevnext, $text);
