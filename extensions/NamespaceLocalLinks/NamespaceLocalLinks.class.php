@@ -11,7 +11,7 @@ class NamespaceLocalLinks {
 		// check if page is translated, come up with lang suffix
 		$langSuffix = false;
 		$pageLang = $title->getPageLanguage()->getCode();
-		if($pageLang != $langSuffix){
+		if($pageLang != $wgContLang->getCode()){ // page lang != sitewide lang, need suffixes for all links
 			$langSuffix = "/".$pageLang;
 		}
 		// for all links without a colon in URL part, do replacement
