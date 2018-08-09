@@ -21,7 +21,7 @@ class ListArticleNamespaces {
 				$output .= "&bull;&nbsp;<a href=\"$url\">$namespaceName</a> ";
 			}
 		}
-		return $output."</div>\r\n";
+		return $output."</div>";
 	}
 }
 
