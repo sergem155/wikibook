@@ -12,3 +12,5 @@
 !extensions/SuperPageTOC/i18n/*
 !extensions/BookExport/
 !extensions/BookExport/*
+!extensions/ListArticleNamespaces/
+!extensions/ListArticleNamespaces/*

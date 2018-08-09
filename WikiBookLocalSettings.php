@@ -5,3 +5,4 @@ $wgLatestNamespaceName = '5.1';
 wfLoadExtension( 'SuperPageTOC' );
 wfLoadExtension( 'NamespaceLocalLinks' );
 wfLoadExtension( 'BookExport' );
+wfLoadExtension( 'ListArticleNamespaces' );
