@@ -162,7 +162,12 @@ class BookExport {
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title></title>
 <style>
-html,body {font-family: Arial, Helvetica, sans-serif; font-size: 12pt;}
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans');
+@import url('https://fonts.googleapis.com/earlyaccess/notosansjp.css');
+body {
+	font-family: "Noto Sans", "Noto Sans CJK JP", sans-serif;
+	font-size: 12pt;
+}
 img, blockquote  {page-break-inside:avoid;}
 tr {page-break-inside:avoid;}
 p {page-break-inside: avoid;}
