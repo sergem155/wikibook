@@ -42,16 +42,24 @@ class BookExport {
 	private function exportWikimarkup(Article $article, &$docTitleText, &$lastTimestamp){
 		$title = $article->getTitle();
 		$doc = $title->getFullText();
+		$lang = $title->getPageLanguage()->getCode();
 		$separator_pos = strpos($doc,'/');
 		$lastTimestamp = 0;
 		if($separator_pos < 1) { // calling not from a subpage, return the article's wikitext
 			$content = ContentHandler::getContentText( $article->getPage()->getContent() );
 			$content = '<span id="topic_'.self::sanitizeFragment(trim($title->getText())).'"></span>'."\r\n".$content;
 			$content = "<!--ARTICLE:".$doc."-->\r\n".$content;
+			$lastTimestamp = wfTimestamp( TS_UNIX, $title->getTouched());
 			return $content;
 		}
 		# find all doc names in super page toc (all links)
 		$parent = Title::newFromText(substr($doc, 0, $separator_pos));
+		// is there a localized version of parent?
+		if($lang != $parent->getPageLanguage()->getCode()){
+			$parentLangTitle = Title::newFromText($parent_doc."/".$lang);	
+			if($parentLangTitle->exists())
+				$parent = $parentLangTitle;
+		}
 		// save last edit time
 		$tmpTimestamp = wfTimestamp( TS_UNIX, $parent->getTouched());
 		if($tmpTimestamp and $tmpTimestamp > $lastTimestamp)
@@ -70,9 +78,15 @@ class BookExport {
 						$matches,
 						PREG_SET_ORDER ) ) {
 			foreach ( $matches as $match ) {
+				$rep_title = Title::newFromText($title->getSubjectNsText().":".$match[1]);
+				if($lang != $rep_title->getPageLanguage()->getCode()){
+					$repLangTitle = Title::newFromText($rep_title->getFullText()."/".$title->getPageLanguage()->getCode());	
+					if($repLangTitle->exists())
+						$rep_title = $repLangTitle;
+				}
 				$superPageText =	str_replace(
 									$match[0],
-									"[[".$title->getSubjectNsText().":".$match[1].$match[2].$match[3]."]]",
+									"[[".$rep_title->getFullText().$match[2].$match[3]."]]", 
 									$superPageText );
 			}		
 		}
@@ -95,8 +109,11 @@ class BookExport {
 			//
 			$doc_article = new Article($doc_title);
 			$doc_content = ContentHandler::getContentText( $doc_article->getPage()->getContent() );
+			// TODO warining - this replaces all links, including those outside the book
 			$doc_content = preg_replace_callback("/\[\[([A-Za-z0-9,.\/_ \(\)-]+)([|](.*?))?\]\]/",
 'self::sanitizeLinks',$doc_content);
+			// TODO also need to replace all local hash links
+			// TODO replace remote in-book hash links, to avoid double hash - just strip the file part
 			$result .= '<span id="topic_'.self::sanitizeFragment(trim($doc_title->getText())).'"></span>'."\r\n"."<!--ARTICLE:".$doc."-->\r\n".$doc_content."\r\n\r\n";
 		}
 		return $result;
