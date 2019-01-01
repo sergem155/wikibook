@@ -57,6 +57,7 @@ class SuperPageTOC {
 			self::$mContLangCode = $wgContLang->getCode();
 			// find a superpage, if exists
 			$parent = self::findSuperpage($title);
+			if(!$parent) return;
 			//
 			self::$mNamespace = $parent->getSubjectNsText();
 			$article = new Article($parent);
