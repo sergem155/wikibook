@@ -6,3 +6,4 @@ wfLoadExtension( 'SuperPageTOC' );
 wfLoadExtension( 'NamespaceLocalLinks' );
 wfLoadExtension( 'BookExport' );
 wfLoadExtension( 'ListArticleNamespaces' );
+wfLoadExtension( 'WikibookBreadcrumbs' );

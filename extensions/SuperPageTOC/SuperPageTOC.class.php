@@ -32,7 +32,7 @@ class SuperPageTOC {
 			$hasRun = true;
 			// ensure TOC is always shown 
 			$text = "__FORCETOC__\r\n".$text;
-			$text = "<languages/><list-article-namespaces/>\n".$text; # show language bar for pages subject to translation
+			$text = "<wikibook-breadcrumbs/><languages/><list-article-namespaces/>\n".$text; # show language bar for pages subject to translation
 			// add /prevnext/ ? only from subpages
 			$doc = $title->getFullText();
 			$separator_pos = strpos($doc,'/');
@@ -56,19 +56,8 @@ class SuperPageTOC {
 			self::$mPageLangCode = $title->getPageLanguage()->getCode();
 			self::$mContLangCode = $wgContLang->getCode();
 			// find a superpage, if exists
-			$doc = $title->getFullText();
-			$separator_pos = strpos($doc,'/');
-			if($separator_pos < 1) // calling not from a subpage
-				return;
-			$superPageDoc = substr($doc, 0, $separator_pos);
-			// see if there is a language-specific version of the superpage
-			if(self::$mPageLangCode != self::$mContLangCode){
-				$linkLangTitle = Title::newFromText($superPageDoc."/".self::$mPageLangCode);	
-				if($linkLangTitle->exists())
-					$superPageDoc .= "/".self::$mPageLangCode;
-			}
-			// get toc text from the super page
-			$parent = Title::newFromText($superPageDoc);
+			$parent = self::findSuperpage($title);
+			//
 			self::$mNamespace = $parent->getSubjectNsText();
 			$article = new Article($parent);
 			$superTocText = ContentHandler::getContentText( $article->getPage()->getContent() );
@@ -92,6 +81,30 @@ class SuperPageTOC {
 			$text = str_replace("/prevnext/",$prevnext, $text);
 		}
 		return true;
+	}
+
+	public static function findSuperpage($title){ // shard with wikibook-breadcrumbs extension
+		if(!$title->isSubpage())
+			return null;
+		// find a superpage, if exists
+		$doc = $title->getFullText();
+		$page_lang_code = $title->getPageLanguage()->getCode();
+		// strip lang superpage suffix
+		$langsuffix_len = strlen($page_lang_code)+1;
+		if(substr($doc, -$langsuffix_len) === ('/'.$page_lang_code))
+			$doc = substr($doc,0,-$langsuffix_len);
+		// find a parent
+		$separator_pos = strrpos($doc,'/');
+		if($separator_pos < 1) // calling not from a subpage
+			return null;
+		$superpage_doc = substr($doc, 0, $separator_pos);
+		// see if there is a language-specific version of the superpage
+		$link_lang_title = Title::newFromText($superpage_doc."/".$page_lang_code);	
+		if($link_lang_title->exists())
+			$superpage_doc .= "/".$page_lang_code;
+		// get the superpage
+		$superpage = Title::newFromText($superpage_doc);
+		return $superpage;
 	}
 
 	private static function generateSuperPageToc($superPageText, $pageToc, $pageTitleText, &$prev, &$next){

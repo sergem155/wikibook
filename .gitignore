@@ -14,3 +14,5 @@
 !extensions/BookExport/*
 !extensions/ListArticleNamespaces/
 !extensions/ListArticleNamespaces/*
+!extensions/WikibookBreadcrumbs/
+!extensions/WikibookBreadcrumbs/*
