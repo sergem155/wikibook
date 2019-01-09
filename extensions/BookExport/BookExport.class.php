@@ -32,7 +32,8 @@ class BookExport {
 	}
 
 	private function sanitizeFragment($fragment){
-		return preg_replace("/[^a-zA-Z0-9-._~:@!$&'\(\)*+,;=?\/]/","_",$fragment);
+		$str = preg_replace("/[^a-zA-Z0-9-._~:@!$&'\(\)*+,;=?\/]/","_",$fragment);
+		return strtolower($str);
 	}
 
 	private function sanitizeLinks($match){
