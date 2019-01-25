@@ -84,25 +84,31 @@ class SuperPageTOC {
 		return true;
 	}
 
-	public static function findSuperpage($title){ // shard with wikibook-breadcrumbs extension
+	public static function findSuperpage($title){ // shared with wikibook-breadcrumbs extension
 		if(!$title->isSubpage())
 			return null;
 		// find a superpage, if exists
 		$doc = $title->getFullText();
+		echo "SUPERPAGE FOR: ".$doc;
 		$page_lang_code = $title->getPageLanguage()->getCode();
 		// strip lang superpage suffix
+		$langsuffix="";
 		$langsuffix_len = strlen($page_lang_code)+1;
-		if(substr($doc, -$langsuffix_len) === ('/'.$page_lang_code))
+		if(substr($doc, -$langsuffix_len) === ('/'.$page_lang_code)){
 			$doc = substr($doc,0,-$langsuffix_len);
+			$langsuffix = '/'.$page_lang_code;
+		}
 		// find a parent
 		$separator_pos = strrpos($doc,'/');
 		if($separator_pos < 1) // calling not from a subpage
 			return null;
 		$superpage_doc = substr($doc, 0, $separator_pos);
-		// see if there is a language-specific version of the superpage
-		$link_lang_title = Title::newFromText($superpage_doc."/".$page_lang_code);	
-		if($link_lang_title->exists())
-			$superpage_doc .= "/".$page_lang_code;
+		// see if there is a language-specific version of the superpage (only if page had the suffix)
+		if($langsuffix){
+			$link_lang_title = Title::newFromText($superpage_doc.$langsuffix);	
+			if($link_lang_title->exists())
+				$superpage_doc .= $langsuffix;
+		}
 		// get the superpage
 		$superpage = Title::newFromText($superpage_doc);
 		return $superpage;
