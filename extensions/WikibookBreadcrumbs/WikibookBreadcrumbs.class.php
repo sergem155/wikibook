@@ -26,9 +26,12 @@ class WikibookBreadcrumbs {
 		while($parent){
 			$tuple = self::getHeadingTextAndFirstLink($parent);
 			if($tuple){
-				$link_title =  Title::newFromText($parent->getNsText().':'.$tuple[1]);	
-				$link = '<a href="'.$link_title->getLinkURL().'">'.$tuple[0].'</a>';
-				$output = "<li>$link</li>".$output;
+				$link_title =  Title::newFromText($parent->getNsText().':'.$tuple[1]);
+				if($link_title){
+					$link = '<a href="'.$link_title->getLinkURL().'">'.$tuple[0].'</a>';
+					$output = "<li>$link</li>".$output;
+				}else
+					$output = "<li>Broken TOC:".$parent->getText()."</li>".$output;
 			}else
 				$output = "<li>a book</li>".$output;
 			$parent = self::findSuperpage($parent);
