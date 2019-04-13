@@ -89,7 +89,7 @@ class SuperPageTOC {
 			return null;
 		// find a superpage, if exists
 		$doc = $title->getFullText();
-		echo "SUPERPAGE FOR: ".$doc;
+		//echo "SUPERPAGE FOR: ".$doc;
 		$page_lang_code = $title->getPageLanguage()->getCode();
 		// strip lang superpage suffix
 		$langsuffix="";
