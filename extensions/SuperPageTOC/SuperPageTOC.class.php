@@ -66,7 +66,7 @@ class SuperPageTOC {
 			// memorize TOC
 			$prev = false;
 			$next = false;
-			$newToc = self::generateSuperPageToc($superTocText, $tocText, $title->getText(), $prev, $next);
+			$newToc = self::generateSuperPageToc($superTocText, $tocText, $title->getDBKey(), $prev, $next);
 			$text = str_replace($tocText,$newToc, $text);
 			// generate Previous | Next links at the bottom of the page
 			$prevnext = "";
