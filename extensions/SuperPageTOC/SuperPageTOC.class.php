@@ -11,6 +11,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 class SuperPageTOC {
 
 	private static $mLevel;
+	private static $mHeading; // last heading found - toplevel document's first h1
 	private static $mBoolFlag;
 	private static $mNamespace;
 	private static $mCurrentLink;
@@ -32,7 +33,7 @@ class SuperPageTOC {
 			$hasRun = true;
 			// ensure TOC is always shown 
 			$text = "__FORCETOC__\r\n".$text;
-			$text = "<wikibook-breadcrumbs/><languages/><list-article-namespaces/>\n".$text; # show language bar for pages subject to translation
+			$text = "<languages/><list-article-namespaces/>\n".$text; # show language bar for pages subject to translation
 			// add /prevnext/ ? only from subpages
 			$doc = $title->getFullText();
 			$separator_pos = strpos($doc,'/');
@@ -47,27 +48,77 @@ class SuperPageTOC {
 	public static function onParserAfterParse( &$parser, &$text, &$stripState ) {
 		global $wgContLang;
 		$tocText = $parser->mOutput->getTOCHTML();
-		// substitute with a new TOC
+		// if there is a TOC and we are not printing - substitute with a new TOC
 		if(strlen($tocText) > 0 and !$parser->getOptions()->getIsPrintable()){
 			$title = $parser->getTitle();
 			if(empty($title))
 				return true;
 			// memorize lang codes
+			self::$mNamespace = $title->getSubjectNsText();
 			self::$mPageLangCode = $title->getPageLanguage()->getCode();
 			self::$mContLangCode = $wgContLang->getCode();
-			// find a superpage, if exists
-			$parent = self::findSuperpage($title);
-			if(!$parent) return;
+			// build the TOC list
+			self::$mHeading = self::findHeadingTextFromTitle($title);
+			$tocList = self::generateSuperPageTocList($title, $heading, [['level'=>1,'title'=>1,'link'=>1]]);
 			//
-			self::$mNamespace = $parent->getSubjectNsText();
-			$article = new Article($parent);
-			$superTocText = ContentHandler::getContentText( $article->getPage()->getContent() );
-			// process links and indentation here
-			// memorize TOC
+			$level=1;
+			$section=1;
+			$newTocText = "".'<li class="toc-heading">'.self::$mHeading."</li>";
 			$prev = false;
 			$next = false;
-			$newToc = self::generateSuperPageToc($superTocText, $tocText, $title->getDBKey(), $prev, $next);
+			$last = false;
+			$openli = false;
+			$index1 = stripos($tocText,'<ul>')+4;
+			$index2 = strripos($tocText,'</ul>');
+			foreach($tocList as $item){
+				// if matches link = 1, insert this page's toc
+				if($item['link']==1){
+					$tocSnippet = substr($tocText,$index1,$index2-$index1);
+					$tocSnippet = preg_replace('/toclevel-1 tocsection-1/', 'toclevel-'.$level.' tocsection-'.$section.' toc-open',$tocSnippet,1);
+					$newTocText .= $tocSnippet;
+					$prev = $last;
+					$section += 1;
+					continue;
+				}
+				// if prev link is set, then this one is next
+				if($prev and !$next)
+					$next = $item;
+				// adjust levels
+				if($level < $item['level']){
+					$newTocText .= str_repeat('<ul>', $item['level']-$level);
+					$level = $item['level'];
+				}elseif($level > $item['level']){
+					$newTocText .= str_repeat('</ul></li>', $level-$item['level']);
+					$level = $item['level'];
+					$openli = false;
+				}elseif($openli){
+					$newTocText .= '</li>';
+				}
+				// render lines from toc list
+				// prepare link 
+				$linkDoc = trim(self::$mNamespace.':'.$item['link']);
+				// see if there is a language-specific version of the link doc
+				if(self::$mPageLangCode != self::$mContLangCode){
+					$linkLangTitle = Title::newFromText($linkDoc."/".self::$mPageLangCode);	
+					if($linkLangTitle->exists())
+						$linkDoc .= "/".self::$mPageLangCode;
+				}
+				// render URL
+				$url = Title::newFromText($linkDoc)->getFullURL();
+				$newTocText .= '<li class="toclevel-'.$level.' tocsection-'.$section.'">'
+					.'<a href="'.$url.'"><span class="toctext">'.$item['title'].'</span></a>';
+				$openli = true;
+				$section += 1;
+				// memorize last item so we could set prev link
+				$last=$item;
+			}
+			if($openli){
+				$newTocText .= '</li>';
+			}
+			// add beginning and end of the original HTML toc and replace TOC in the page 
+			$newToc = substr($tocText,0,$index1).$newTocText.substr($tocText,$index2);
 			$text = str_replace($tocText,$newToc, $text);
+
 			// generate Previous | Next links at the bottom of the page
 			$prevnext = "";
 			if ($prev){
@@ -82,6 +133,62 @@ class SuperPageTOC {
 			$text = str_replace("/prevnext/",$prevnext, $text);
 		}
 		return true;
+	}
+
+	// looks up for a parent title and returns TOC array; recurses if there are ancestors on top of parent
+	private static function generateSuperPageTocList($childTitle, $heading, $superTocArray){
+		$topicFound = false;
+
+		// find a superpage, if exists
+		$parent = self::findSuperpage($childTitle);
+		if(!$parent){
+			return $superTocArray; // no parents, return whatever list was given as a parameter
+		}
+
+		// get parent body
+		$article = new Article($parent);
+		$superPageText = ContentHandler::getContentText( $article->getPage()->getContent() );
+		self::$mHeading = self::findHeadingTextFromContent($superPageText);
+
+		// remove lang suffix from pagetitle, so it would match toc entry
+		if(self::$mPageLangCode != self::$mContLangCode){
+			$pageTitleText = substr($pageTitleText, 0, strlen($pageTitleText)-1-strlen(self::$mPageLangCode));
+		}
+
+		// for each line in toc:, look for bullets with links; bullets can be multi-level
+		$results = [];
+		foreach(explode(PHP_EOL, $superPageText) as $line){ 
+			// TODO non-link lines
+			if(preg_match("/^(\*+)\[\[\s*([^|]+)\s*(?:\|\s*([^\]]*))?\]\]/",$line,$matches)==1){
+				$asterisks = $matches[1];
+				$level = strlen($asterisks);
+				$url = trim($matches[2]);
+				if(count($matches)>3)
+					$title = $matches[3];
+				else
+					$title = $url;
+				$parentTitleText = $childTitle->getDBKey();
+				//echo $url."--".$parentTitleText."\r\n";
+				$len = strlen($parentTitleText); 
+				if(strtolower(substr($url,0,$len)) == strtolower($parentTitleText)){
+					// incorporate param array here, add current level to each item, set bool flag
+					foreach($superTocArray as $item){
+						$item['level']+=$level;
+						array_push($results, $item);
+					}
+					$topicFound = true;
+				}
+				else // TODO remove extra levels, not associated with the current child page
+					array_push($results,['level'=>$level,'title'=>$title,'link'=>$url]);
+			}
+		}
+		if(!$topicFound){ // paste child array to the and of the list
+			foreach($superTocArray as $item){
+				array_push($results, $item);
+			}
+		}
+		// recurse parent ancestor tocs, if any 
+		return self::generateSuperPageTocList($parent,$heading,$results);
 	}
 
 	public static function findSuperpage($title){ // shared with wikibook-breadcrumbs extension
@@ -114,83 +221,25 @@ class SuperPageTOC {
 		return $superpage;
 	}
 
-	private static function generateSuperPageToc($superPageText, $pageToc, $pageTitleText, &$prev, &$next){
-		$output = "";
-		$level = 1;
-		$sectionLevel = 1;
-		self::$mBoolTopicFound = false;
-		self::$mCurrentLink = false;
-		// remove lang suffix from pagetitle, so it would match toc
-		if(self::$mPageLangCode != self::$mContLangCode){
-			$pageTitleText = substr($pageTitleText, 0, strlen($pageTitleText)-1-strlen(self::$mPageLangCode));
+	public static function findHeadingTextFromTitle($title){
+		$article = new Article($title);
+		$heading = "";
+		$url = "";
+		if($article){
+			$text = ContentHandler::getContentText( $article->getPage()->getContent() );
+			if($text){
+				return self::findHeadingTextFromContent($text);				
+			}
 		}
-		// for each line in toc:
-		$superPageTocSeparator = "`-`-`-`-`-`-`SuperPageTOC-Separator`-`-`-`-`-`-`";
-		foreach(preg_split("/((\r?\n)|(\r\n?))/", $superPageText) as $line){
-			// get heading
-			if(preg_match("/=(.+?)=/", $line, $matches)){
-				$output.='<div class="book-title">'.$matches[1].'</div>';
-				continue;
-			}
-			// find this title in super page toc
-			if(preg_match("/\[\[\s*".preg_quote($pageTitleText,'/')."\s*(?:\|\s*[^\]]*)?\]\]/i",$line)==1){
-				$output.=$superPageTocSeparator;
-				if(self::$mCurrentLink){
-					$prev = self::$mCurrentLink;
-				}
-				self::$mBoolTopicFound = true;
-				continue;
-			}
-			// add <ul> or </ul>
-			$newLevel = 1;
-			$i = 0;
-			while($line[$i++]=='*')
-				$newLevel += 1;
-			if($newLevel>1)
-				$line = substr($line, $newLevel-1);
-			if($newLevel > $level){
-				for($i=$level; $i<$newLevel; $i++)
-					$output .= "<ul>";
-			}else{
-				for($i=$level; $i>$newLevel; $i--)
-					$output .= "</ul>";
-			}
-			$level = $newLevel;
-			self::$mLevel = $level;
-			// add links
-			self::$mBoolFlag = false;
-			$line = preg_replace_callback("/\[\[\s*([^|]+)\s*(?:\|\s*([^\]]*))?\]\]/","self::replaceLinks",$line);
-			if(!self::$mBoolFlag) // not a link line
-				$line = '<span class="toctext">'.$line.'</span>';
-			else
-				if(self::$mBoolTopicFound and !$next){
-					$next = self::$mCurrentLink;
-				}
-			$output.='<li class="toclevel-'.$level.' tocsection-'.$sectionLevel.'">'.$line."</li>";
-			$sectionLevel++;
-		} 
-		// assemble 2 tocs
-		$halves = explode($superPageTocSeparator,$output);
-		
-		$index1 = stripos($pageToc,'<ul>')+4;
-		$index2 = strripos($pageToc,'</ul>');
-
-		return substr($pageToc,0,$index1).$halves[0].substr($pageToc,$index1,$index2-$index1).$halves[1].substr($pageToc,$index2);
+		return null;
 	}
 
-	private static function replaceLinks($matches){
-		self::$mBoolFlag = true;
-		$linkDoc = trim(self::$mNamespace.':'.$matches[1]);
-		// see if there is a language-specific version of the link doc
-		if(self::$mPageLangCode != self::$mContLangCode){
-			$linkLangTitle = Title::newFromText($linkDoc."/".self::$mPageLangCode);	
-			if($linkLangTitle->exists())
-				$linkDoc .= "/".self::$mPageLangCode;
+	public static function findHeadingTextFromContent($text){
+		if(preg_match("/=+([^=]+)=+/", $text, $matches)){
+			return $matches[1];
 		}
-		// get URL and insert it
-		$url = Title::newFromText($linkDoc)->getFullURL();
-		self::$mCurrentLink = $url;
-		return '<a href="'.$url.'"><span class="toctext">'.$matches[2].'</span></a>';
+		return null;
 	}
+
 }
 ?>

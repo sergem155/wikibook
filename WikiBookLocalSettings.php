@@ -1,7 +1,7 @@
 <?php
 wfLoadExtension( 'CanonicalNamespace' );
 $wgCanonicalNamespaceName = 'latest';
-$wgLatestNamespaceName = '5.2';
+$wgLatestNamespaceName = '5.3';
 wfLoadExtension( 'SuperPageTOC' );
 wfLoadExtension( 'NamespaceLocalLinks' );
 wfLoadExtension( 'BookExport' );
