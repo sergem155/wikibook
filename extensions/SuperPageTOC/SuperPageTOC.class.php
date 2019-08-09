@@ -71,7 +71,12 @@ class SuperPageTOC {
 			$index1 = stripos($tocText,'<ul>')+4;
 			$index2 = strripos($tocText,'</ul>');
 			foreach($tocList as $item){
-				// if matches link = 1, insert this page's toc
+				// not a link - text
+				if($item['link']==null){
+					$newTocText .= '<span class="toclevel-'.$level.' toctext tocstatic">'.$item['title'].'</span>';
+					continue;
+				}
+				// if matches link = 1, insert this page's toc HTML
 				if($item['link']==1){
 					$tocSnippet = substr($tocText,$index1,$index2-$index1);
 					$tocSnippet = preg_replace('/toclevel-1 tocsection-1/', 'toclevel-'.$level.' tocsection-'.$section.' toc-open',$tocSnippet,1);
@@ -158,7 +163,7 @@ class SuperPageTOC {
 		// for each line in toc:, look for bullets with links; bullets can be multi-level
 		$results = [];
 		foreach(explode(PHP_EOL, $superPageText) as $line){ 
-			// TODO non-link lines
+			// link, with a bullet 
 			if(preg_match("/^(\*+)\[\[\s*([^|]+)\s*(?:\|\s*([^\]]*))?\]\]/",$line,$matches)==1){
 				$asterisks = $matches[1];
 				$level = strlen($asterisks);
@@ -167,8 +172,8 @@ class SuperPageTOC {
 					$title = $matches[3];
 				else
 					$title = $url;
+				// toc item matching with child
 				$parentTitleText = $childTitle->getDBKey();
-				//echo $url."--".$parentTitleText."\r\n";
 				$len = strlen($parentTitleText); 
 				if(strtolower(substr($url,0,$len)) == strtolower($parentTitleText)){
 					// incorporate param array here, add current level to each item, set bool flag
@@ -178,8 +183,13 @@ class SuperPageTOC {
 					}
 					$topicFound = true;
 				}
-				else // TODO remove extra levels, not associated with the current child page
+				else
 					array_push($results,['level'=>$level,'title'=>$title,'link'=>$url]);
+			// heading and markup - ignore
+			}elseif(preg_match("/(=.+?=|<.+>)/", $line)){
+			// text
+			}elseif(strlen(trim($line))>0){
+				array_push($results,['level'=>null,'title'=>$line,'link'=>null]);
 			}
 		}
 		if(!$topicFound){ // paste child array to the and of the list
