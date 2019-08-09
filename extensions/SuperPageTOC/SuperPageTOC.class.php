@@ -100,16 +100,7 @@ class SuperPageTOC {
 					$newTocText .= '</li>';
 				}
 				// render lines from toc list
-				// prepare link 
-				$linkDoc = trim(self::$mNamespace.':'.$item['link']);
-				// see if there is a language-specific version of the link doc
-				if(self::$mPageLangCode != self::$mContLangCode){
-					$linkLangTitle = Title::newFromText($linkDoc."/".self::$mPageLangCode);	
-					if($linkLangTitle->exists())
-						$linkDoc .= "/".self::$mPageLangCode;
-				}
-				// render URL
-				$url = Title::newFromText($linkDoc)->getFullURL();
+				$url = self::renderLink($item['link']);
 				$newTocText .= '<li class="toclevel-'.$level.' tocsection-'.$section.'">'
 					.'<a href="'.$url.'"><span class="toctext">'.$item['title'].'</span></a>';
 				$openli = true;
@@ -127,17 +118,32 @@ class SuperPageTOC {
 			// generate Previous | Next links at the bottom of the page
 			$prevnext = "";
 			if ($prev){
-				$prevnext .= '<a href="'.$prev['link'].'">&lt; '.(wfMessage( 'wikibook-prev' )->inLanguage(self::$mPageLangCode)->text()).'</a>';
+				$prevnext .= '<a href="'.self::renderLink($prev['link']).'">&lt; '.(wfMessage( 'wikibook-prev' )->inLanguage(self::$mPageLangCode)->text()).'</a>';
 			}
 			if($prev and $next)
 				$prevnext .= ' | ';
 			if ($next){
-				$prevnext .= '<a href="'.$next['link'].'">'.(wfMessage( 'wikibook-next' )->inLanguage(self::$mPageLangCode)->text()).' &gt;</a>';
+				$prevnext .= '<a href="'.self::renderLink($next['link']).'">'.(wfMessage( 'wikibook-next' )->inLanguage(self::$mPageLangCode)->text()).' &gt;</a>';
 			}
 			$prevnext = "<center>".$prevnext."</center>";
 			$text = str_replace("/prevnext/",$prevnext, $text);
 		}
 		return true;
+	}
+
+	private static function renderLink($link)
+	{
+		// prepare link 
+		$linkDoc = trim(self::$mNamespace.':'.$link);
+		// see if there is a language-specific version of the link doc
+		if(self::$mPageLangCode != self::$mContLangCode){
+			$linkLangTitle = Title::newFromText($linkDoc."/".self::$mPageLangCode);	
+			if($linkLangTitle->exists())
+				$linkDoc .= "/".self::$mPageLangCode;
+		}
+		// render URL
+		$url = Title::newFromText($linkDoc)->getFullURL();
+		return $url;
 	}
 
 	// looks up for a parent title and returns TOC array; recurses if there are ancestors on top of parent
