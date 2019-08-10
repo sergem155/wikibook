@@ -67,12 +67,14 @@ class SuperPageTOC {
 			$prev = false;
 			$next = false;
 			$last = false;
+			$childFound = false;
 			$openli = false;
 			$index1 = stripos($tocText,'<ul>')+4;
 			$index2 = strripos($tocText,'</ul>');
 			foreach($tocList as $item){
 				// not a link - text
 				if($item['link']==null){
+					// TODO close li before static if changing levels - save levels with static
 					$newTocText .= '<span class="toclevel-'.$level.' toctext tocstatic">'.$item['title'].'</span>';
 					continue;
 				}
@@ -82,11 +84,12 @@ class SuperPageTOC {
 					$tocSnippet = preg_replace('/toclevel-1 tocsection-1/', 'toclevel-'.$level.' tocsection-'.$section.' toc-open',$tocSnippet,1);
 					$newTocText .= $tocSnippet;
 					$prev = $last;
+					$childFound = true;
 					$section += 1;
 					continue;
 				}
 				// if prev link is set, then this one is next
-				if($prev and !$next)
+				if($childFound and !$next)
 					$next = $item;
 				// adjust levels
 				if($level < $item['level']){
@@ -146,7 +149,7 @@ class SuperPageTOC {
 		return $url;
 	}
 
-	// looks up for a parent title and returns TOC array; recurses if there are ancestors on top of parent
+	// looks up for a parent title and returns TOC array; recurses if there are ancestors on top of the parent
 	private static function generateSuperPageTocList($childTitle, $heading, $superTocArray){
 		$topicFound = false;
 
@@ -174,6 +177,9 @@ class SuperPageTOC {
 				$asterisks = $matches[1];
 				$level = strlen($asterisks);
 				$url = trim($matches[2]);
+				if(self::$mPageLangCode != self::$mContLangCode){
+					$url .= "/".self::$mPageLangCode;
+				}
 				if(count($matches)>3)
 					$title = $matches[3];
 				else
@@ -181,7 +187,11 @@ class SuperPageTOC {
 				// toc item matching with child
 				$parentTitleText = $childTitle->getDBKey();
 				$len = strlen($parentTitleText); 
-				if(strtolower(substr($url,0,$len)) == strtolower($parentTitleText)){
+				//echo $parentTitleText.'--'.$url."\n";
+				//echo substr($url,$len,1)."\n";
+				if(strtolower($url) == strtolower($parentTitleText) ||
+				( (strtolower(substr($url,0,$len)) == strtolower($parentTitleText)) && 
+					(substr($url,$len,1)=='/' || substr($url,$len,1)=='#') ) ){
 					// incorporate param array here, add current level to each item, set bool flag
 					foreach($superTocArray as $item){
 						$item['level']+=$level;
@@ -195,7 +205,7 @@ class SuperPageTOC {
 			}elseif(preg_match("/(=.+?=|<.+>)/", $line)){
 			// text
 			}elseif(strlen(trim($line))>0){
-				array_push($results,['level'=>null,'title'=>$line,'link'=>null]);
+				array_push($results,['level'=>$level,'title'=>$line,'link'=>null]);
 			}
 		}
 		if(!$topicFound){ // paste child array to the and of the list
