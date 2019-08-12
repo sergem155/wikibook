@@ -19,7 +19,7 @@ class NamespaceLocalLinks {
 		// check if page is translated, come up with lang suffix
 		$langSuffix = false;
 		$pageLang = $title->getPageLanguage()->getCode();
-		if($pageLang != $wgContLang->getCode()){ // page lang != sitewide lang, need suffixes for all links
+		if($pageLang != $wgLanguageCode){ // page lang != sitewide lang, need suffixes for all links
 			$langSuffix = "/".$pageLang;
 		}
 		// for all links without a colon in URL part, do replacement
@@ -42,5 +42,35 @@ class NamespaceLocalLinks {
 			return true;	
 		}
 	}
+
+	public static function onInitializeArticleMaybeRedirect( $title, $request, &$ignoreRedirect, &$target, $article ) {
+		$text = ContentHandler::getContentText( $article->getPage()->getContent() );
+		if(preg_match("/^#REDIRECT\s+\[\[\s*(.*)\s*\]\]/",$text,$matches)){
+			$link = $matches[1];
+			if(strstr($link,":")) return; // main namespace or explicit namespace specification
+			// check if page is translated, come up with lang suffix
+			$langSuffix = false;
+			$pageLang = $title->getPageLanguage()->getCode();
+			if($pageLang != $wgLanguageCode){ // page lang != sitewide lang, need suffixes for all links
+				$langSuffix = "/".$pageLang;
+			}
+			// get namespace-local title 
+			$linkDoc = trim($title->getSubjectNsText().":".$link);
+			if($langSuffix){
+				$linkLangTitle = Title::newFromText($linkDoc.$langSuffix);
+				if($linkLangTitle->exists()){
+					$target = $linkLangTitle;
+					return;
+				}
+			}
+			$target = Title::newFromText($linkDoc);
+		}
+	}
+
+	public static function onHtmlPageLinkRendererBegin($linkRenderer, $target, &$text, &$extraAttribs, &$query, &$ret ) {
+		// TODO: "unbreak" namespace-local links
+	}
+
+
 }
 ?>

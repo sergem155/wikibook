@@ -11,7 +11,9 @@
 		"NamespaceLocalLinks": "NamespaceLocalLinks.class.php"
 	},
 	"Hooks": {
-		"ParserBeforeStrip": "NamespaceLocalLinks::onParserBeforeStrip"
+		"ParserBeforeStrip": "NamespaceLocalLinks::onParserBeforeStrip",
+		"InitializeArticleMaybeRedirect": "NamespaceLocalLinks::onInitializeArticleMaybeRedirect",
+		"HtmlPageLinkRendererBegin": "NamespaceLocalLinks::onHtmlPageLinkRendererBegin"
 	},
 	"manifest_version": 1
 }
