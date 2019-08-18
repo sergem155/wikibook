@@ -81,6 +81,7 @@ class SuperPageTOC {
 				// if matches link = 1, insert this page's toc HTML
 				if($item['link']==1){
 					$tocSnippet = substr($tocText,$index1,$index2-$index1);
+					$tocSnippet = preg_replace('/<li\s.+?(<ul.+)<\/li>/s','$1',$tocSnippet,1); // remove top heading
 					$tocSnippet = preg_replace('/toclevel-1 tocsection-1/', 'toclevel-'.$level.' tocsection-'.$section.' toc-open',$tocSnippet,1);
 					$newTocText .= $tocSnippet;
 					$prev = $last;
@@ -104,7 +105,9 @@ class SuperPageTOC {
 				}
 				// render lines from toc list
 				$url = self::renderLink($item['link']);
-				$newTocText .= '<li class="toclevel-'.$level.' tocsection-'.$section.'">'
+				$is_open="";
+				if(array_key_exists('is_open',$item)) $is_open = "toc-open";
+				$newTocText .= '<li class="toclevel-'.$level.' tocsection-'.$section.' '.$is_open.'">'
 					.'<a href="'.$url.'"><span class="toctext">'.$item['title'].'</span></a>';
 				$openli = true;
 				$section += 1;
@@ -193,6 +196,7 @@ class SuperPageTOC {
 				( (strtolower(substr($url,0,$len)) == strtolower($parentTitleText)) && 
 					(substr($url,$len,1)=='/' || substr($url,$len,1)=='#') ) ){
 					// incorporate param array here, add current level to each item, set bool flag
+					array_push($results,['level'=>$level,'title'=>$title,'link'=>$url,'is_open'=>true]);
 					foreach($superTocArray as $item){
 						$item['level']+=$level;
 						array_push($results, $item);
