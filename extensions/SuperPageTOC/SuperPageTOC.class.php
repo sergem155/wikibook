@@ -176,7 +176,7 @@ class SuperPageTOC {
 		$results = [];
 		foreach(explode(PHP_EOL, $superPageText) as $line){ 
 			// link, with a bullet 
-			if(preg_match("/^(\*+)\[\[\s*([^|]+)\s*(?:\|\s*([^\]]*))?\]\]/",$line,$matches)==1){
+			if(preg_match("/^(\*+)\s*\[\[\s*([^|]+)\s*(?:\|\s*([^\]]*))?\]\]/",$line,$matches)==1){
 				$asterisks = $matches[1];
 				$level = strlen($asterisks);
 				$url = trim($matches[2]);
