@@ -81,7 +81,11 @@ class SuperPageTOC {
 				// if matches link = 1, insert this page's toc HTML
 				if($item['link']==1){
 					$tocSnippet = substr($tocText,$index1,$index2-$index1);
-					$tocSnippet = preg_replace('/<li\s.+?(<ul.+)<\/li>/s','$1',$tocSnippet,1); // remove top heading
+					if(preg_match('/<li\s.+?(<ul.+)<\/li>/s',$tocSnippet,$matches)==1){ // remove top heading
+						$tocSnippet=matches[1];
+					}else{
+						$tocSnippet="";
+					}
 					$tocSnippet = preg_replace('/toclevel-1 tocsection-1/', 'toclevel-'.$level.' tocsection-'.$section.' toc-open',$tocSnippet,1);
 					$newTocText .= $tocSnippet;
 					$prev = $last;
