@@ -82,7 +82,7 @@ class SuperPageTOC {
 				if($item['link']==1){
 					$tocSnippet = substr($tocText,$index1,$index2-$index1);
 					if(preg_match('/<li\s.+?(<ul.+)<\/li>/s',$tocSnippet,$matches)==1){ // remove top heading
-						$tocSnippet=matches[1];
+						$tocSnippet=$matches[1];
 					}else{
 						$tocSnippet="";
 					}
