@@ -59,7 +59,7 @@ class SuperPageTOC {
 			self::$mContLangCode = $wgContLang->getCode();
 			// build the TOC list
 			self::$mHeading = self::findHeadingTextFromTitle($title);
-			$tocList = self::generateSuperPageTocList($title, $heading, [['level'=>1,'title'=>1,'link'=>1]]);
+			$tocList = self::generateSuperPageTocList($title, self::$mHeading, [['level'=>1,'title'=>1,'link'=>1]]);
 			//
 			$level=1;
 			$section=1;
@@ -152,8 +152,12 @@ class SuperPageTOC {
 				$linkDoc .= "/".self::$mPageLangCode;
 		}
 		// render URL
-		$url = Title::newFromText($linkDoc)->getFullURL();
-		return $url;
+		$doc = Title::newFromText($linkDoc);
+		if($doc){
+			$url = $doc->getFullURL();
+			return $url;			
+		}
+		return "bad+link";
 	}
 
 	// looks up for a parent title and returns TOC array; recurses if there are ancestors on top of the parent
@@ -213,7 +217,7 @@ class SuperPageTOC {
 			}elseif(preg_match("/(=.+?=|<.+>)/", $line)){
 			// text
 			}elseif(strlen(trim($line))>0){
-				array_push($results,['level'=>$level,'title'=>$line,'link'=>null]);
+				array_push($results,['level'=>0,'title'=>$line,'link'=>null]);
 			}
 		}
 		if(!$topicFound){ // paste child array to the and of the list
