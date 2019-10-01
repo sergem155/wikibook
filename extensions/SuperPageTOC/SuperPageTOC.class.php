@@ -67,11 +67,14 @@ class SuperPageTOC {
 			$prev = false;
 			$next = false;
 			$last = false;
+			$prev_last = false;
 			$childFound = false;
 			$openli = false;
 			$index1 = stripos($tocText,'<ul>')+4;
 			$index2 = strripos($tocText,'</ul>');
 			foreach($tocList as $item){
+				echo '<script language="Javascript">console.log("prev: '.$item['link'].'")</script>';
+				echo '<script language="Javascript">console.log("prev: '.($prev?$prev['link']:'none').'")</script>';
 				// not a link - text
 				if($item['link']==null){
 					// TODO close li before static if changing levels - save levels with static
@@ -88,7 +91,7 @@ class SuperPageTOC {
 					}
 					$tocSnippet = preg_replace('/toclevel-1 tocsection-1/', 'toclevel-'.$level.' tocsection-'.$section.' toc-open',$tocSnippet,1);
 					$newTocText .= $tocSnippet;
-					$prev = $last;
+					$prev = $prev_last;
 					$childFound = true;
 					$section += 1;
 					continue;
@@ -116,6 +119,7 @@ class SuperPageTOC {
 				$openli = true;
 				$section += 1;
 				// memorize last item so we could set prev link
+				$prev_last = $last;
 				$last=$item;
 			}
 			if($openli){
