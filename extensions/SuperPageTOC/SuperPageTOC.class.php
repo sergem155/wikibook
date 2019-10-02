@@ -73,8 +73,6 @@ class SuperPageTOC {
 			$index1 = stripos($tocText,'<ul>')+4;
 			$index2 = strripos($tocText,'</ul>');
 			foreach($tocList as $item){
-				echo '<script language="Javascript">console.log("prev: '.$item['link'].'")</script>';
-				echo '<script language="Javascript">console.log("prev: '.($prev?$prev['link']:'none').'")</script>';
 				// not a link - text
 				if($item['link']==null){
 					// TODO close li before static if changing levels - save levels with static
