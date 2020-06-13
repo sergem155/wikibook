@@ -42,19 +42,32 @@ class BookExport {
 
 	private function exportWikimarkup(Article $article, &$docTitleText, &$lastTimestamp){
 		$title = $article->getTitle();
+		$titleNS = $title->getSubjectNsText().":";
+		$parent = null;
 		$doc = $title->getFullText();
 		$lang = $title->getPageLanguage()->getCode();
 		$separator_pos = strpos($doc,'/');
 		$lastTimestamp = 0;
-		if($separator_pos < 1) { // calling not from a subpage, return the article's wikitext
+		$result = "";
+		if($separator_pos < 1) { // calling not from a subpage
 			$content = ContentHandler::getContentText( $article->getPage()->getContent() );
-			$content = '<span id="topic_'.self::sanitizeFragment(trim($title->getText())).'"></span>'."\r\n".$content;
-			$content = "<!--ARTICLE:".$doc."-->\r\n".$content;
-			$lastTimestamp = wfTimestamp( TS_UNIX, $title->getTouched());
-			return $content;
+			if(preg_match('/=\s*Articles From Namespace (.+?)\s*=/i',$content,$matches)){
+				$titleNS = $matches[1];
+				if($titleNS == 'Main') $titleNS = "";
+				$titleNS.=":";
+				$parent = $title; // force TOC to this doc
+			}else{
+				// return the article's wikitext
+				$content = '<span id="topic_'.self::sanitizeFragment(trim($title->getText())).'"></span>'."\r\n".$content;
+				$content = "<!--ARTICLE:".$doc."-->\r\n".$content;
+				$lastTimestamp = wfTimestamp( TS_UNIX, $title->getTouched());
+				return $content;
+			}
 		}
 		# find all doc names in super page toc (all links)
-		$parent = self::findSuperpage($title);
+		if($parent == null){ // TOC is not forced
+			$parent = self::findSuperpage($title);
+		}
 		// is there a localized version of parent?
 		if($lang != $parent->getPageLanguage()->getCode()){
 			$parentLangTitle = Title::newFromText($parent_doc."/".$lang);	
@@ -79,7 +92,7 @@ class BookExport {
 						$matches,
 						PREG_SET_ORDER ) ) {
 			foreach ( $matches as $match ) {
-				$rep_title = Title::newFromText($title->getSubjectNsText().":".$match[1]);
+				$rep_title = Title::newFromText($titleNS.$match[1]); // colon is included if needed
 				if($lang != $rep_title->getPageLanguage()->getCode()){
 					$repLangTitle = Title::newFromText($rep_title->getFullText()."/".$title->getPageLanguage()->getCode());	
 					if($repLangTitle->exists())
@@ -99,7 +112,6 @@ class BookExport {
 			}
 		}
 		# ??? H1 title of the whole thing?
-		$result = "";
 		foreach($docs as $doc){
 			# ensure same namespace
 			$doc_title = Title::newFromText($doc);
