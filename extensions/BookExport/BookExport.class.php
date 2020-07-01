@@ -8,6 +8,15 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+function endsWith($haystack, $needle)
+{
+    $length = strlen($needle);
+    if ($length == 0) {
+        return true;
+    }
+    return (substr($haystack, -$length) === $needle);
+}
+
 class BookExport {
 
 	public static function onUnknownAction( $action, Article $article ) {
@@ -49,7 +58,7 @@ class BookExport {
 		$separator_pos = strpos($doc,'/');
 		$lastTimestamp = 0;
 		$result = "";
-		if($separator_pos < 1) { // calling not from a subpage
+		if($separator_pos < 1 || endsWith($doc,'/'.$lang)) { // calling not from a subpage
 			$content = ContentHandler::getContentText( $article->getPage()->getContent() );
 			if(preg_match('/=\s*Articles From Namespace (.+?)\s*=/i',$content,$matches)){
 				$titleNS = $matches[1];
@@ -87,14 +96,18 @@ class BookExport {
 		}
 		# make all TOC links namespace-local
 		if( preg_match_all( // all links without a colon in URL part
-						"/\[\[([A-Za-z0-9,.\/_ \(\)-]+)(\#[A-Za-z0-9 ._-]*)?([|](.*?))?\]\]/",
+						"/\[\[([A-Z:a-z0-9,.\/_ \(\)-]+)(\#[A-Za-z0-9 ._-]*)?([|](.*?))?\]\]/",
 						$superPageText,
 						$matches,
 						PREG_SET_ORDER ) ) {
 			foreach ( $matches as $match ) {
-				$rep_title = Title::newFromText($titleNS.$match[1]); // colon is included if needed
+				if(strpos($match[1],':')){
+					$rep_title = Title::newFromText($match[1]); // colon is included if needed
+				}else{
+					$rep_title = Title::newFromText($titleNS.$match[1]); // colon is included if needed
+				}
 				if($lang != $rep_title->getPageLanguage()->getCode()){
-					$repLangTitle = Title::newFromText($rep_title->getFullText()."/".$title->getPageLanguage()->getCode());	
+					$repLangTitle = Title::newFromText($rep_title->getFullText()."/".$lang);	
 					if($repLangTitle->exists())
 						$rep_title = $repLangTitle;
 				}
