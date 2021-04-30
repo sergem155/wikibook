@@ -8,10 +8,17 @@
 	"license-name": "MIT",
 	"type": "other",
 	"AutoloadClasses": {
-		"BookExport": "BookExport.class.php"
+		"BookExport": "BookExport.class.php",
+		"HtmlLocalImagesExport": "HtmlLocalImagesExport.class.php",
+		"WikimarkupExport": "WikimarkupExport.class.php"
 	},
 	"Hooks": {
 		"UnknownAction": "BookExport::onUnknownAction"
+	},
+	"Actions": {
+		"pdf-export": "BookExport",
+		"wikimarkup-export": "WikimarkupExport",
+		"html-localimages-export": "HtmlLocalImagesExport"
 	},
 	"manifest_version": 1
 }

@@ -17,8 +17,21 @@ function endsWith($haystack, $needle)
     return (substr($haystack, -$length) === $needle);
 }
 
-class BookExport {
+class BookExport extends Action {
 
+	// for Mediawiki 1.29+
+	public function getName() {
+		return 'pdf-export';
+	}
+
+	public function show() {
+		//$title = $this->page->getTitle();
+		//$article = new Article( Title::newFromText( $title ) ) ;
+		self::exportPdf($this->getArticle());
+		die();
+	}
+
+	// for older implementations, do onUnknownAction
 	public static function onUnknownAction( $action, Article $article ) {
 		// We don't do any processing unless it's pdfbook
 		if ($action != 'pdf-export' && $action != 'html-localimages-export'
@@ -49,7 +62,7 @@ class BookExport {
 		return("[[#topic_".self::sanitizeFragment(trim($match[1])).$match[2]."]]");
 	}
 
-	private function exportWikimarkup(Article $article, &$docTitleText, &$lastTimestamp){
+	public function exportWikimarkup(Article $article, &$docTitleText, &$lastTimestamp){
 		$title = $article->getTitle();
 		$titleNS = $title->getSubjectNsText().":";
 		$parent = null;
@@ -176,14 +189,14 @@ class BookExport {
 	}
 
 
-	private function exportHtml(Article $article){
+	public function exportHtml(Article $article){
 		global $wgOut, $wgUser, $wgTitle, $wgParser, $wgRequest;
 		global $wgServer, $wgArticlePath, $wgScriptPath, $wgUploadPath, $wgUploadDirectory, $wgScript, $wgStylePath;
 		$title = $article->getTitle();
 
 		$opt = ParserOptions::newFromUser($wgUser);
 		$opt->setIsPrintable(true);
-		$opt->setEditSection(false);
+		//$opt->setEditSection(false);
 		$wikimarkup = self::exportWikimarkup($article, $docTitleText, $lastTimestamp);
 		$out = $wgParser->parse($wikimarkup, $title, $opt, true, true);
 		$text = $out->getText();
@@ -269,7 +282,8 @@ EOT;
 
 		$opt = ParserOptions::newFromUser($wgUser);
 		$opt->setIsPrintable(true);
-		$opt->setEditSection(false);
+		// commented for 1.35+:
+		//$opt->setEditSection(false);
 		$out = $wgParser->parse($wikimarkup."\n__NOTOC__\n", $title, $opt, true, true);
 
 		$body = self::htmlPage($out->getText(),$base);
