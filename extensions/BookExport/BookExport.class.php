@@ -1,6 +1,6 @@
 <?php
 
-/* Copyright 2018 Sergey Menshikov
+/* Copyright 2018-2021 Sergey Menshikov
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -196,10 +196,9 @@ class BookExport extends Action {
 
 		$opt = ParserOptions::newFromUser($wgUser);
 		$opt->setIsPrintable(true);
-		//$opt->setEditSection(false);
 		$wikimarkup = self::exportWikimarkup($article, $docTitleText, $lastTimestamp);
 		$out = $wgParser->parse($wikimarkup, $title, $opt, true, true);
-		$text = $out->getText();
+		$text = $out->getText(['enableSectionEditLinks'=>false]);
 		$base = '<base href="'.($title->getFullUrl()).'?action=html-localimages-export">';
 		return self::htmlPage(self::coverPageHtml($docTitleText).$text, $base);
 	}
@@ -282,11 +281,9 @@ EOT;
 
 		$opt = ParserOptions::newFromUser($wgUser);
 		$opt->setIsPrintable(true);
-		// commented for 1.35+:
-		//$opt->setEditSection(false);
 		$out = $wgParser->parse($wikimarkup."\n__NOTOC__\n", $title, $opt, true, true);
 
-		$body = self::htmlPage($out->getText(),$base);
+		$body = self::htmlPage($out->getText(['enableSectionEditLinks'=>false]),$base);
 		$cover = self::htmlPage(self::coverPageHTML($docVersionText.' '.$docTitleText),$base);
 
 		$coverFileName = self::writeFile($cover);
