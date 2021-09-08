@@ -23,7 +23,13 @@ class ListArticleNamespaces {
 		$titleText = $title->getText(); // without namespace
 		$nsText = $title->getNsText();
 		$output = "<div class=\"list-article-namespaces\">";
+		$nslist = array();
 		foreach ($wgExtraNamespaces as $index => $namespaceName){
+			if($index&1) continue; // skip discussion namespaces
+			$nslist[] = $namespaceName;
+		}
+		usort($nslist,'strcasecmp');
+		foreach ($nslist as $namespaceName){
 			if($index&1) continue; // skip discussion namespaces  
 			$possibleTitle = Title::newFromText($namespaceName.':'.$titleText);	
 			if($possibleTitle->exists()){
