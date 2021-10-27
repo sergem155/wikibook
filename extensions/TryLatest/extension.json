@@ -1,0 +1,12 @@
+{
+	"name": "TryLatest",
+	"type": "other",
+	"AutoloadClasses": {
+		"TryLatest": "TryLatest.class.php"
+	},
+	"Hooks": {
+		"ShowMissingArticle": "TryLatest::onShowMissingArticle"
+	},
+	"manifest_version": 1
+}
+
