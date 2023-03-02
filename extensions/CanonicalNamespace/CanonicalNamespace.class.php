@@ -27,7 +27,11 @@ class CanonicalNamespace {
 		if(array_key_exists($title->getNamespace(), $wgExtraNamespaces)){
 			// $r_title = Title::newFromText($wgCanonicalNamespaceName . ':' . $title->getText());
 			// $out->setCanonicalUrl($r_title->getFullURL());
-			$out->setCanonicalUrl("https://help.brightpattern.com/Latest:".$title->getText());
+			if($title->getNamespace() != 208){
+				$out->setCanonicalUrl("https://help.brightpattern.com/Latest:".$title->getText());
+			}else{
+				$out->setCanonicalUrl("https://help.brightpattern.com/draft:".$title->getText());
+			}
 		}
 	}
 }
