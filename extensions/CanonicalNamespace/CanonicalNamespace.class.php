@@ -62,7 +62,7 @@ class CanonicalNamespace {
 	public static function onInternalParseBeforeLinks( Parser &$parser, string &$text ) {
 		global $wgLatestNamespaceName, $wgCanonicalNamespaceName;
 
-		if ( !$wgLatestNamespaceName ) {
+		if ( !$wgLatestNamespaceName || $wgCanonicalNamespaceName ) {
 			return;
 		}
 
