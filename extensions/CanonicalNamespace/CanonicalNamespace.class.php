@@ -90,6 +90,7 @@ class CanonicalNamespace {
 			);
 
 			if ( !$r ) {
+				$replaced[] = $m;
 				continue;
 			}
 
