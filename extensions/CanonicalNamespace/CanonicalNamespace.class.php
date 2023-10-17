@@ -76,23 +76,30 @@ class CanonicalNamespace {
 			return;
 		}
 
-		$patterns = [];
-		$replacements = [];
+		$replaced = [];
 		foreach ( $matches[0] as $m ) {
-			$patterns[] = '/' . preg_quote( $m, '/' ) . '/';
-			$replacements[] = preg_replace(
+			if ( in_array( $m, $replaced ) ) {
+				continue;
+			}
+
+			$r = preg_replace(
 				'/^\[\[(\s?)' . $wgCanonicalNamespaceName . ':/iU',
 				"[[" . $wgLatestNamespaceName . ":",
 				$m,
 				-1
 			);
-		}
 
-		$text = preg_replace(
-			$patterns,
-			$replacements,
-			$text,
-			-1
-		);
+			if ( !$r ) {
+				continue;
+			}
+
+			$text = preg_replace(
+				'/' . preg_quote( $m, '/' ) . '/',
+				$r,
+				$text,
+				-1
+			);
+			$replaced[] = $m;
+		}
 	}
 }
