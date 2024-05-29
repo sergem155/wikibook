@@ -177,11 +177,6 @@ class SuperPageTOC {
 		$superPageText = ContentHandler::getContentText( $article->getPage()->getContent() );
 		self::$mHeading = self::findHeadingTextFromContent($superPageText);
 
-		// remove lang suffix from pagetitle, so it would match toc entry
-		if(self::$mPageLangCode != self::$mContLangCode){
-			$pageTitleText = substr($pageTitleText, 0, strlen($pageTitleText)-1-strlen(self::$mPageLangCode));
-		}
-
 		// for each line in toc:, look for bullets with links; bullets can be multi-level
 		$results = [];
 		foreach(explode(PHP_EOL, $superPageText) as $line){ 
