@@ -9,68 +9,117 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 class NamespaceLocalLinks {
+	/**
+	 * @param $parser
+	 * @param $text
+	 * @param $strip_state
+	 *
+	 * @return true|void
+	 */
 	public static function onParserBeforeStrip( &$parser, &$text, &$strip_state ) {
 		global $wgExtraNamespaces, $wgContLang;
 		$title = $parser->getTitle();
 		// only do this for pages, and only for those in custom namespaces
-		if(empty($title) || !array_key_exists($title->getNamespace(),$wgExtraNamespaces)) {
+		if ( empty( $title ) || !array_key_exists( $title->getNamespace(), $wgExtraNamespaces ) ) {
 			return true;
 		}
 		// check if page is translated, come up with lang suffix
 		$langSuffix = false;
 		$pageLang = $title->getPageLanguage()->getCode();
-		if($pageLang !=  $wgContLang->getCode()){ // page lang != sitewide lang, need suffixes for all links
-			$langSuffix = "/".$pageLang;
+
+		// page lang != sitewide lang, need suffixes for all links
+		if ( $pageLang != $wgContLang->getCode() ) {
+			$langSuffix = "/" . $pageLang;
 		}
 		// for all links without a colon in URL part, do replacement
-		if( preg_match_all(
-						"/\[\[([A-Za-z0-9,.\/_ \(\)-]+)(\#[A-Za-z0-9 ._-]*)?([|](.*?))?\]\]/",
-						$text,
-						$matches,
-						PREG_SET_ORDER ) ) {
+		if (
+			preg_match_all(
+				"/\[\[([A-Za-z0-9,.\/_ \(\)-]+)(\#[A-Za-z0-9 ._-]*)?([|](.*?))?\]\]/",
+				$text,
+				$matches,
+				PREG_SET_ORDER
+			)
+		) {
 			foreach ( $matches as $match ) {
 				// see if language variant exists
-				$linkDoc = trim($title->getSubjectNsText().":".$match[1]);
-				if($langSuffix){
-					$linkLangTitle = Title::newFromText($linkDoc.$langSuffix);	
-					if($linkLangTitle->exists())
+				$linkDoc = trim( $title->getSubjectNsText() . ":" . $match[1] );
+				if ( $langSuffix ) {
+					$linkLangTitle = Title::newFromText( $linkDoc . $langSuffix );
+					if ( $linkLangTitle->exists() ) {
 						$linkDoc .= $langSuffix;
+					}
 				}
 				// replace link
-				$text =	str_replace($match[0], "[[".$linkDoc.$match[2].$match[3]."]]", $text );
-			}		
-			return true;	
+				$text = str_replace( $match[0], "[[" . $linkDoc . $match[2] . $match[3] . "]]", $text );
+			}
+
+			return true;
 		}
 	}
 
+	/**
+	 * @param $title
+	 * @param $request
+	 * @param $ignoreRedirect
+	 * @param $target
+	 * @param $article
+	 *
+	 * @return void
+	 * @throws MWException
+	 */
 	public static function onInitializeArticleMaybeRedirect( $title, $request, &$ignoreRedirect, &$target, $article ) {
+		global $wgLanguageCode;
+
 		$text = ContentHandler::getContentText( $article->getPage()->getContent() );
-		if(preg_match("/^#REDIRECT\s+\[\[\s*(.*)\s*\]\]/",$text,$matches)){
+		if ( preg_match( "/^#REDIRECT\s+\[\[\s*(.*)\s*\]\]/", $text, $matches ) ) {
 			$link = $matches[1];
-			if(strstr($link,":")) return; // main namespace or explicit namespace specification
+
+			// main namespace or explicit namespace specification
+			if ( strstr( $link, ":" ) ) {
+				return;
+			}
+
 			// check if page is translated, come up with lang suffix
 			$langSuffix = false;
 			$pageLang = $title->getPageLanguage()->getCode();
-			if($pageLang != $wgLanguageCode){ // page lang != sitewide lang, need suffixes for all links
-				$langSuffix = "/".$pageLang;
+
+			// page lang != sitewide lang, need suffixes for all links
+			if ( $pageLang != $wgLanguageCode ) {
+				$langSuffix = "/" . $pageLang;
 			}
-			// get namespace-local title 
-			$linkDoc = trim($title->getSubjectNsText().":".$link);
-			if($langSuffix){
-				$linkLangTitle = Title::newFromText($linkDoc.$langSuffix);
-				if($linkLangTitle->exists()){
+
+			// get namespace-local title
+			$linkDoc = trim( $title->getSubjectNsText() . ":" . $link );
+			if ( $langSuffix ) {
+				$linkLangTitle = Title::newFromText( $linkDoc . $langSuffix );
+				if ( $linkLangTitle && $linkLangTitle->exists() ) {
 					$target = $linkLangTitle;
+
 					return;
 				}
 			}
-			$target = Title::newFromText($linkDoc);
+			$target = Title::newFromText( $linkDoc );
 		}
 	}
 
-	public static function onHtmlPageLinkRendererBegin($linkRenderer, $target, &$text, &$extraAttribs, &$query, &$ret ) {
+	/**
+	 * @param $linkRenderer
+	 * @param $target
+	 * @param $text
+	 * @param $extraAttribs
+	 * @param $query
+	 * @param $ret
+	 *
+	 * @return void
+	 */
+	public static function onHtmlPageLinkRendererBegin(
+		$linkRenderer,
+		$target,
+		&$text,
+		&$extraAttribs,
+		&$query,
+		&$ret
+	) {
 		// TODO: "unbreak" namespace-local links
 	}
-
-
 }
-?>
