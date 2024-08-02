@@ -34,14 +34,14 @@ class CanonicalNamespace {
 	 * @return void
 	 */
 	public static function onBeforePageDisplay( OutputPage &$out, Skin &$skin ) {
-		global $wgExtraNamespaces;
+		global $wgExtraNamespaces, $wgLatestNamespaceName;
 		// global $wgCanonicalNamespaceName;
 		$title = $skin->getTitle();
 		if ( array_key_exists( $title->getNamespace(), $wgExtraNamespaces ) ) {
 			// $r_title = Title::newFromText($wgCanonicalNamespaceName . ':' . $title->getText());
 			// $out->setCanonicalUrl($r_title->getFullURL());
 			if ( $title->getNamespace() != 208 ) {
-				$out->setCanonicalUrl( "https://help.brightpattern.com/Latest:" . $title->getText() );
+				$out->setCanonicalUrl( "https://help.brightpattern.com/$wgLatestNamespaceName:" . $title->getText() );
 			} else {
 				$out->setCanonicalUrl( "https://help.brightpattern.com/draft:" . $title->getText() );
 			}
