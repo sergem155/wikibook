@@ -10,16 +10,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 class WikimarkupExport extends BookExport {
 
-	// for Mediawiki 1.29+
-	public function getName() {
+	/**
+	 * for Mediawiki 1.29+
+	 *
+	 * @return string
+	 */
+	public function getName(): string {
 		return 'wikimarkup-export';
 	}
 
-	public function show() {
-		echo self::exportWikimarkup($this->getArticle(), $docTitleText, $lastTimestamp);
+	/**
+	 * @return void
+	 * @throws MWException
+	 */
+	public function show(): void {
+		echo self::exportWikimarkup( $this->getArticle(), $docTitleText, $lastTimestamp );
 		die();
 	}
-
 }
-
-?>
